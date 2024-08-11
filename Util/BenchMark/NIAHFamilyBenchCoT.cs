@@ -9,7 +9,7 @@ namespace LLMSharp.Util.BenchMark;
 // 3family
 // 4family
 // 5family
-public class NIAHFamilyBenchv2(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
+public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
 {
     class FamilyNode
     {
@@ -185,7 +185,7 @@ public class NIAHFamilyBenchv2(iLLMAPI api, PromptBuilder pb, int maxFamilyCount
         pb.System = "你是一个AI助手，下面请仔细阅读以下文本，并回答问题";
         pb.Messages = [
             (desc, PromptBuilder.From.user),
-        ($"上面的文本中描述了一个或多个家族的关系，请从上面的文本中找到{target}的在上面所展示出来的最远古的直系亲属。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用现有的最远古的祖先。", PromptBuilder.From.user),
+        ($"上面的文本中描述了一个或多个家族的关系，请从上面的文本中回溯出{target}最早的祖先。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用已知的最远古的祖先。", PromptBuilder.From.user),
         ];
 
         var prompt = pb.GetResult();
@@ -195,7 +195,7 @@ public class NIAHFamilyBenchv2(iLLMAPI api, PromptBuilder pb, int maxFamilyCount
         {
             response += token;
         }
-        Console.WriteLine($"{anc}|{response}");
+        Console.WriteLine($"正确答案:{anc}|模型输出:{response}");
         // 假设模型返回的信息是正确的
         if (response.Contains($"[{anc}]"))
         {

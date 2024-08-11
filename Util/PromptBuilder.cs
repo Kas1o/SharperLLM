@@ -81,4 +81,11 @@ public class PromptBuilder{
         InputPrefix = "### Instruction:",
         OutputPrefix = "### Response:"
     };
+    public static PromptBuilder Mistral => new PromptBuilder()
+    {
+        SysSeqPrefix = "[INST]",
+        SysSeqSuffix = "[/INST] ",
+        InputPrefix = "[INST]",
+        InputSuffix = "[/INST]"
+    };
 }

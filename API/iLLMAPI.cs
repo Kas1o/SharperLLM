@@ -11,7 +11,7 @@ namespace LLMSharp.API
         public virtual async IAsyncEnumerable<string> GenerateTextAsync(string prompt)
         {
             throw new NotImplementedException();
-            yield return "";
+            yield return "";//应对奇怪的编译检查。必须写一个。
         }
         public virtual string GenerateText(string prompt)
         {
