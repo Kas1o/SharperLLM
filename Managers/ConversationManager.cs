@@ -12,22 +12,34 @@ public class ConversationManager
         _promptBuilder = promptBuilder;
         _messages = new List<(string, PromptBuilder.From)>();
     }
-
+    /// <summary>
+    /// Insert a Message at end of the conversation.
+    /// </summary>
+    /// <param name="message"></param>
     public void AddSystemMessage(string message)
     {
         _messages.Add((message, PromptBuilder.From.system));
     }
-
+    /// <summary>
+    /// Insert a Message at end of the conversation.
+    /// </summary>
+    /// <param name="message"></param>
     public void AddUserMessage(string message)
     {
         _messages.Add((message, PromptBuilder.From.user));
     }
-
+    /// <summary>
+    /// Insert a Message at end of the conversation.
+    /// </summary>
+    /// <param name="message"></param>
     public void AddAssistantMessage(string message)
     {
         _messages.Add((message, PromptBuilder.From.assistant));
     }
-
+    /// <summary>
+    /// Return the result prompt of this conversation.
+    /// </summary>
+    /// <returns></returns>
     public virtual string GetPrompt()
     {
         _promptBuilder.Messages = _messages.ToArray();
