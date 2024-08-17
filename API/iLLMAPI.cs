@@ -17,5 +17,9 @@ namespace LLMSharp.API
         {
             throw new NotImplementedException();
         }
+        public virtual string GenerateChatReply()
+        {
+            throw new NotImplementedException();    
+        }
     }
 }
