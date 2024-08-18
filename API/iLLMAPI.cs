@@ -17,9 +17,10 @@ namespace LLMSharp.API
         {
             throw new NotImplementedException();
         }
-        public virtual string GenerateChatReply()
+        public virtual async IAsyncEnumerable<string> GenerateChatReply(PromptBuilder promptBuilder)
         {
-            throw new NotImplementedException();    
+            throw new NotImplementedException();
+            yield return "";//应对奇怪的编译检查。必须写一个。
         }
     }
 }
