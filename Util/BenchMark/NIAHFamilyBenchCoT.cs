@@ -176,8 +176,23 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
                 Console.WriteLine("结果是:" + results[i - 1, j - 1]);
             }
         }
-
+        PrintFloatArray(results);
         return results;
+
+        void PrintFloatArray(float[,] floats)
+        {
+            int rows = floats.GetLength(0);
+            int cols = floats.GetLength(1);
+
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    Console.Write(floats[i, j] + (j < cols - 1 ? ", " : ""));
+                }
+                Console.WriteLine(); // Move to the next line after finishing a row.
+            }
+        }
     }
 
     private bool AskQuestion(string desc, string target, string anc, out float accuracy)
