@@ -47,14 +47,13 @@ namespace SharperLLM.API
                     if (!response.IsSuccessStatusCode)
                     {
                         throw new Exception($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
-                        yield break;
                     }
 
                     // Read the response body as a stream.
                     using (var responseStream = await response.Content.ReadAsStreamAsync())
                     using (var reader = new StreamReader(responseStream, Encoding.UTF8))
                     {
-                        string line;
+                        string? line;
                         while ((line = await reader.ReadLineAsync()) != null)
                         {
                             if (string.IsNullOrWhiteSpace(line)) continue;
@@ -65,17 +64,18 @@ namespace SharperLLM.API
                             {
                                 var json = match.Groups[1].Value;
 
-                                dynamic data = 1;
+                                dynamic? data = 1;
                                 try
                                 {
                                     data = JsonConvert.DeserializeObject(json);
                                 }
-                                catch(Exception e)
+                                catch
                                 {
                                     if (json == "[DONE]") break;
-                                    else throw e;
+                                    else throw;
                                 }
 
+                                if(data != null)
                                 foreach (var choice in data.choices)
                                 {
                                     if (choice.delta != null && choice.delta.content != null)
