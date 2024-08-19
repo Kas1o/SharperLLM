@@ -186,12 +186,11 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
         pb.Messages = [
             (desc, PromptBuilder.From.user),
         ($"上面的文本中描述了一个或多个家族的关系，请从上面的文本中回溯出{target}最早的祖先。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用已知的最远古的祖先。", PromptBuilder.From.user),
+        ($"\n好的，接下来我会开始推理{target}在上述所有人中的已知最远古的祖先，并将最终用[]符号包围祖先的人名。：\n（待续）", PromptBuilder.From.assistant)
         ];
 
-        var prompt = pb.GetResult();
-        prompt += $"\n好的，接下来我会开始推理{target}在上述所有人中的已知最远古的祖先，并将最终用[]符号包围祖先的人名。：\n";
         string response = string.Empty;
-        foreach (var token in api.GenerateTextAsync(prompt).ToBlockingEnumerable())
+        foreach (var token in api.GenerateChatReplyAsync(pb).ToBlockingEnumerable())
         {
             response += token;
         }
