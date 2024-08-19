@@ -1,11 +1,11 @@
-﻿using LLMSharp.API;
+﻿using SharperLLM.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LLMSharp.Util.BenchMark;
+namespace SharperLLM.Util.BenchMark;
 
 public class NIAHBench
 {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LLMSharp.API
+namespace SharperLLM.API
 {
     public class iLLMAPI
     {

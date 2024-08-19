@@ -1,7 +1,7 @@
-﻿using LLMSharp.API;
-using LLMSharp.Util.Ext;
+﻿using SharperLLM.API;
+using SharperLLM.Util.Ext;
 
-namespace LLMSharp.Util.BenchMark;
+namespace SharperLLM.Util.BenchMark;
 // ExampleOutput:
 //         3PPF 6PPF 9PPF 12PPF 15PPF
 // 1family

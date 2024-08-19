@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 
-namespace LLMSharp.Managers;
+namespace SharperLLM.Managers;
 
 public class RoleplayManager : ConversationManager
 {

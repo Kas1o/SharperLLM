@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LLMSharp.Util.Ext
+namespace SharperLLM.Util.Ext
 {
     internal static class ListExtension
     {

@@ -1,4 +1,4 @@
-﻿using LLMSharp.API;
+﻿using SharperLLM.API;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http.Headers;

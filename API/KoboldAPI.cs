@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Text;
 
-namespace LLMSharp.API
+namespace SharperLLM.API
 {
     public class KoboldAPI : iLLMAPI
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-namespace LLMSharp.Managers;
+namespace SharperLLM.Managers;
 public class ConversationManager
 {
     public PromptBuilder _promptBuilder;
