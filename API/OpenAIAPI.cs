@@ -46,7 +46,7 @@ namespace SharperLLM.API
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        Debug.WriteLine($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                        throw new Exception($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
                         yield break;
                     }
 
