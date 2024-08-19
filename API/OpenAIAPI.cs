@@ -1,14 +1,9 @@
 ﻿using LLMSharp.API;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SharperLLM.API
 {
@@ -54,24 +49,24 @@ namespace SharperLLM.API
         public override async IAsyncEnumerable<string> GenerateChatReplyAsync(PromptBuilder promptBuilder)
         {
             var targetURL = $"{url}/chat/completions";
-            var messages = promptBuilder.Messages.Select(m => new { role = m.Item1.ToString(), content = m.Item2 }).ToArray();
+            var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
 
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 
-                var request = new
+                var request = new HttpRequestMessage(HttpMethod.Post, targetURL)
                 {
-                    model = model,
-                    messages = messages,
-                    stream = true
+                    Content = new StringContent(JsonConvert.SerializeObject(new
+                    {
+                        model = model,
+                        messages = messages,
+                        stream = true
+                    }), Encoding.UTF8, "application/json")
                 };
 
-                var jsonRequest = JsonConvert.SerializeObject(request);
-                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-                using (var response = await client.PostAsync(targetURL, content))
+                using (var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -79,6 +74,7 @@ namespace SharperLLM.API
                         yield break;
                     }
 
+                    // Read the response body as a stream.
                     using (var responseStream = await response.Content.ReadAsStreamAsync())
                     using (var reader = new StreamReader(responseStream, Encoding.UTF8))
                     {
@@ -92,7 +88,17 @@ namespace SharperLLM.API
                             if (match.Success)
                             {
                                 var json = match.Groups[1].Value;
-                                dynamic data = JsonConvert.DeserializeObject(json);
+
+                                dynamic data = 1;
+                                try
+                                {
+                                    data = JsonConvert.DeserializeObject(json);
+                                }
+                                catch(Exception e)
+                                {
+                                    if (json == "[DONE]") break;
+                                    else throw e;
+                                }
 
                                 foreach (var choice in data.choices)
                                 {
