@@ -37,7 +37,7 @@ git clone https://github.com/Kas1o/SharperLLM
 ```
 dotnet new console #如果你需要的是控制台应用的话。
 ```
-3. 导入此项目到你的项目。
+3. 引用此项目到你的项目。
    
 浏览到你的项目文件 `*.csproj`中，加入以下语句。
 ```diff
