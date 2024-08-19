@@ -14,36 +14,12 @@ namespace SharperLLM.API
     {
         public override string GenerateChatReply(PromptBuilder promptBuilder)
         {
-            var targetURL = $"{url}/chat/completions";
-            var messages = promptBuilder.Messages.Select(m => new { role = m.Item1.ToString(), content = m.Item2 }).ToArray();
-
-            using (var client = new HttpClient())
+            StringBuilder sb = new();
+            foreach(var item in GenerateChatReplyAsync(promptBuilder).ToBlockingEnumerable())
             {
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-
-                var request = new
-                {
-                    model = model,
-                    messages = messages
-                };
-
-                var jsonRequest = JsonConvert.SerializeObject(request);
-                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = client.PostAsync(targetURL, content).Result;//System.Net.Http.HttpRequestException:“The SSL connection could not be established, see inner exception.” inner: AuthenticationException: Cannot determine the frame size or a corrupted frame was received.
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string responseBody = response.Content.ReadAsStringAsync().Result;
-                    dynamic jsonResponse = JsonConvert.DeserializeObject(responseBody);
-
-                    return jsonResponse.choices[0];
-                }
-                else
-                {
-                    throw new Exception($"{response.StatusCode}");
-                }
+                sb.Append(item);
             }
+            return sb.ToString();
         }
 
         public override async IAsyncEnumerable<string> GenerateChatReplyAsync(PromptBuilder promptBuilder)
