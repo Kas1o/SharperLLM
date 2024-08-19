@@ -4,12 +4,12 @@ using System.Text;
 namespace SharperLLM.Managers;
 public class ConversationManager
 {
-    public PromptBuilder _promptBuilder;
+    public PromptBuilder promptBuilder;
     private List<(string, PromptBuilder.From)> _messages;
 
     public ConversationManager(PromptBuilder promptBuilder)
     {
-        _promptBuilder = promptBuilder;
+        this.promptBuilder = promptBuilder;
         _messages = new List<(string, PromptBuilder.From)>();
     }
     /// <summary>
@@ -42,7 +42,7 @@ public class ConversationManager
     /// <returns></returns>
     public virtual string GetPrompt()
     {
-        _promptBuilder.Messages = _messages.ToArray();
-        return _promptBuilder.GetResult();
+        promptBuilder.Messages = _messages.ToArray();
+        return promptBuilder.GetResult();
     }
 }

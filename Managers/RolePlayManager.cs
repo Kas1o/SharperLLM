@@ -20,8 +20,8 @@ public class RoleplayManager : ConversationManager
     private void ModifyPrefixes()
     {
         // 修改InputPrefix和OutputPrefix，添加角色名称
-            base._promptBuilder.InputPrefix += $"【{_userRoleName??"用户"}】";
-            base._promptBuilder.OutputPrefix += $"【{_assistantRoleName??"AI助手"}】";
+            base.promptBuilder.InputPrefix += $"【{_userRoleName??"用户"}】";
+            base.promptBuilder.OutputPrefix += $"【{_assistantRoleName??"AI助手"}】";
     }
     public override string GetPrompt()
     {
