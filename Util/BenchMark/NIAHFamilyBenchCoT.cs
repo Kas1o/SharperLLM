@@ -209,6 +209,8 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
         {
             response += token;
         }
+        if(response.Trim() == string.Empty) return AskQuestion(desc, target, anc, out accuracy);//空回复重问。
+
         Console.WriteLine($"正确答案:{anc}|模型输出:{response}");
         // 假设模型返回的信息是正确的
         if (response.Contains($"[{anc}]"))
