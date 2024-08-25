@@ -47,13 +47,12 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
                 {
                     if (node.parent != null)
                     {
-                        relationships.Add(new Random().Next(5) switch
+                        relationships.Add(new Random().Next(4) switch
                         {
                             0 => $"{node.person}是{node.parent.person}的孩子",
                             1 => $"{node.person}是{node.parent.person}的女儿",
                             2 => $"{node.person}是{node.parent.person}的儿子",
-                            3 => $"{node.parent.person}是{node.person}的父亲",
-                            4 => $"{node.parent.person}是{node.person}的母亲"
+                            3 => $"{node.parent.person}是{node.person}的父母",
                         });
 
                     }
