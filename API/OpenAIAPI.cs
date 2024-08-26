@@ -14,12 +14,15 @@ namespace SharperLLM.API
     {
         public override string GenerateChatReply(PromptBuilder promptBuilder)
         {
-            StringBuilder sb = new();
-            foreach(var item in GenerateChatReplyAsync(promptBuilder).ToBlockingEnumerable())
+            return Task.Run(async () =>
             {
-                sb.Append(item);
-            }
-            return sb.ToString();
+                var result = new StringBuilder();
+                await foreach (var item in GenerateChatReplyAsync(promptBuilder))
+                {
+                    result.Append(item);
+                }
+                return result.ToString();
+            }).GetAwaiter().GetResult();
         }
 
         public override async IAsyncEnumerable<string> GenerateChatReplyAsync(PromptBuilder promptBuilder)
