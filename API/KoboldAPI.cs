@@ -65,7 +65,7 @@ namespace SharperLLM.API
             conf.prompt = prompt;
             var client = new HttpClient();
 
-            client.BaseAddress = _uri;
+            client.BaseAddress = new Uri( uri + "/extra/generate/stream");
 
             var request = new HttpRequestMessage(HttpMethod.Post, uri)
             {
@@ -99,7 +99,7 @@ namespace SharperLLM.API
         {
             conf.prompt = prompt;
             var client = new HttpClient();
-            client.BaseAddress = _uri;
+            client.BaseAddress = new Uri(uri + "/v1/generate");
 
             var request = new HttpRequestMessage(HttpMethod.Post, uri)
             {
@@ -143,6 +143,7 @@ namespace SharperLLM.API
         }
         private static Uri CreateLooseUri(string looseUriString)
         {
+            looseUriString = looseUriString.TrimEnd('/');
             if (string.IsNullOrWhiteSpace(looseUriString))
             {
                 throw new ArgumentException("URI string cannot be null, empty, or whitespace.", nameof(looseUriString));
