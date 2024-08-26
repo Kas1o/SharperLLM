@@ -101,7 +101,7 @@ namespace SharperLLM.API
             var client = new HttpClient();
             client.BaseAddress = new Uri(uri + "/v1/generate");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, uri)
+            var request = new HttpRequestMessage(HttpMethod.Post, uri+ "/v1/generate")
             {
                 Content = new StringContent(JsonConvert.SerializeObject(conf, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }),
                                             Encoding.UTF8, "application/json")
@@ -138,7 +138,7 @@ namespace SharperLLM.API
             catch (Exception ex)
             {
                 // 将其他异常也直接抛出
-                throw new ApplicationException("An error occurred while processing the request.", ex);
+                throw new ApplicationException($"An error occurred while processing the request:{ex.Message}", ex);
             }
         }
         private static Uri CreateLooseUri(string looseUriString)
