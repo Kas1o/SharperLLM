@@ -203,7 +203,7 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
         ];
 
         var prompt = pb.GetResult();
-        prompt += $"\n好的,{target}最远古的祖先是：";
+        prompt += $"\n好的,{target}最远古的祖先是\"";
         string response = string.Empty;
         foreach (var token in api.GenerateTextAsync(prompt).ToBlockingEnumerable())
         {
