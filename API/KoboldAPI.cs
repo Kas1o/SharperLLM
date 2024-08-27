@@ -67,7 +67,7 @@ namespace SharperLLM.API
 
             client.BaseAddress = new Uri( uri + "/extra/generate/stream");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, uri)
+            var request = new HttpRequestMessage(HttpMethod.Post, uri + "/extra/generate/stream")
             {
                 Content = new StringContent(JsonConvert.SerializeObject(conf, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }),
                 Encoding.UTF8, "application/json")
