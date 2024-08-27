@@ -115,7 +115,7 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
         return $"{Guid.NewGuid().ToString("N").Substring(0, 5)}";
     }
 
-    public float[,] RunBenchmark()
+    public float[,] RunBenchmark(Action<string> logCallback = null)
     {
         float[,] results = new float[maxFamilyCount, ppfIncTimes];
 
@@ -136,13 +136,16 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
                         var families = BuildFamilies(i, j * ppfInterval);
                         string desc = FamilyNode.GenerateShuffledRelationships(families).Result;
                         var allPersons = families.SelectMany(family => family.GetAllChild().Select(child => child.person)).ToList();
-                        Console.WriteLine($"Now Testing: familyCount:{i}, ppf:{ppf}, rep:{k}");
+                        if (logCallback != null)
+                            logCallback($"Now Testing: familyCount:{i}, ppf:{ppf}, rep:{k}");
+                        else
+                            Console.WriteLine($"Now Testing: familyCount:{i}, ppf:{ppf}, rep:{k}");
 
                         var target = allPersons[new Random().Next(allPersons.Count)];
                         var family = families.First(f => f.GetAllChild().Any(child => child.person == target));
                         var anc = family.person;
 
-                        if (AskQuestion(desc, target, anc, out float accuracy))
+                        if (AskQuestion(logCallback, desc, target, anc, out float accuracy))
                         {
                             results[i - 1, j - 1] += accuracy / rep;
                         }
@@ -157,14 +160,16 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
                         // 组织随机家庭树
                         var families = BuildFamilies(i, j * ppfInterval);
                         string desc = FamilyNode.GenerateShuffledRelationships(families).Result;
-
-                        Console.WriteLine($"Now Testing: familyCount:{i}, ppf:{ppf}, rep:{k}");
+                        if (logCallback != null)
+                            logCallback($"Now Testing: familyCount:{i}, ppf:{ppf}, rep:{k}");
+                        else
+                            Console.WriteLine($"Now Testing: familyCount:{i}, ppf:{ppf}, rep:{k}");
                         foreach (var family in families)
                         {
                             var anc = family.person;
                             foreach (var target in family.GetAllChild())
                             {
-                                if (AskQuestion(desc, target.person, anc, out float accuracy))
+                                if (AskQuestion(logCallback, desc, target.person, anc, out float accuracy))
                                 {
                                     results[i - 1, j - 1] += accuracy / ((float)rep * families.Count * family.GetAllChild().Count);
                                 }
@@ -172,7 +177,10 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
                         }
                     }
                 }
-                Console.WriteLine("结果是:" + results[i - 1, j - 1]);
+                if (logCallback != null)
+                    logCallback("结果是:" + results[i - 1, j - 1]);
+                else
+                    Console.WriteLine("结果是:" + results[i - 1, j - 1]);
             }
         }
         PrintFloatArray(results);
@@ -194,7 +202,7 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
         }
     }
 
-    private bool AskQuestion(string desc, string target, string anc, out float accuracy)
+    private bool AskQuestion(Action<string> logCallback,string desc, string target, string anc, out float accuracy)
     {
         pb.System = "你是一个AI助手，下面请仔细阅读以下文本，并回答问题";
         pb.Messages = [
@@ -205,11 +213,11 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
         var prompt = pb.GetResult();
         prompt += $"\n好的,{target}最远古的祖先是\"";
         string response = string.Empty;
-        foreach (var token in api.GenerateTextAsync(prompt).ToBlockingEnumerable())
-        {
-            response += token;
-        }
-        Console.WriteLine($"{anc}|{response}");
+        response = api.GenerateText(prompt);
+        if (logCallback != null)
+            logCallback($"{anc}|{response}");
+        else
+            Console.WriteLine($"{anc}|{response}");
         // 假设模型返回的信息是正确的
         if (response.Contains(anc))
         {
