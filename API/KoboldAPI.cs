@@ -117,7 +117,7 @@ namespace SharperLLM.API
                 // 读取响应内容
                 string responseBody = response.Content.ReadAsStringAsync().Result;
 
-                // 解析JSON响应，提取"text"字段
+                // 解析JSON响应，提取"text"字段  
                 JObject json = JObject.Parse(responseBody);
                 JArray results = (JArray)json["results"];
                 if (results.Count > 0)
