@@ -11,7 +11,7 @@ namespace SharperLLM.Util.BenchMark;
 // 5family
 public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
 {
-    class FamilyNode
+    public class FamilyNode
     {
         public string person;
         public List<FamilyNode> childs = new();
@@ -74,7 +74,7 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
         }
     }
 
-    List<FamilyNode> BuildFamilies(int familyCount, int ppf)
+    public List<FamilyNode> BuildFamilies(int familyCount, int ppf)
     {
         var random = new Random();
         var families = new List<FamilyNode>();

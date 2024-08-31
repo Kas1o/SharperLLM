@@ -1,5 +1,5 @@
 using System.Text;
-
+namespace SharperLLM.Util;
 public class PromptBuilder{
     public enum From
     {
