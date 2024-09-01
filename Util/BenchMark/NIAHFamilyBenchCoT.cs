@@ -73,7 +73,7 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
             return string.Join(", ", relationships);
         }
     }
-
+    public List<(PromptBuilder pb, bool Correctness)> generationCache;
     public List<FamilyNode> BuildFamilies(int familyCount, int ppf)
     {
         var random = new Random();
@@ -198,8 +198,7 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
     {
         pb.System = "你是一个AI助手，下面请仔细阅读以下文本，并回答问题";
         pb.Messages = [
-            (desc, PromptBuilder.From.user),
-        ($"上面的文本中描述了一个或多个家族的关系，请从上面的文本中回溯出{target}最早的祖先。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用已知的最远古的祖先。", PromptBuilder.From.user),
+        ($"{desc}\n上面的文本中描述了一个或多个家族的关系，请从上面的文本中回溯出{target}最早的祖先。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用已知的最远古的祖先。", PromptBuilder.From.user),
         ($"\n好的，接下来我会开始推理{target}在上述所有人中的已知最远古的祖先，并将最终用[]符号包围祖先的人名。：\n（待续）", PromptBuilder.From.assistant)
         ];
 
@@ -208,19 +207,37 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
         {
             response += token;
         }
-        if(response.Trim() == string.Empty) return AskQuestion(desc, target, anc, out accuracy);//空回复重问。
+        if (response.Trim() == string.Empty) return AskQuestion(desc, target, anc, out accuracy);//空回复重问。
 
         Console.WriteLine($"正确答案:{anc}|模型输出:{response}");
         // 假设模型返回的信息是正确的
         if (response.Contains($"[{anc}]"))
         {
             accuracy = 1.0f;
+            generationCache.Add((
+                new PromptBuilder
+                {
+                    Messages = [
+                    (desc, PromptBuilder.From.user),
+                    ($"{desc}\n上面的文本中描述了一个或多个家族的关系，请从上面的文本中回溯出{target}最早的祖先。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用已知的最远古的祖先。", PromptBuilder.From.user),
+                    ($"\n好的，接下来我会开始推理{target}在上述所有人中的已知最远古的祖先，并将最终用[]符号包围祖先的人名。：\n{response}", PromptBuilder.From.assistant),
+                    ]
+                }, true));
             Console.WriteLine("结果正确!🥰");
             return true;
         }
         else
         {
             accuracy = 0.0f;
+            generationCache.Add((
+                new PromptBuilder
+                {
+                    Messages = [
+                    (desc, PromptBuilder.From.user),
+                                ($"{desc}\n上面的文本中描述了一个或多个家族的关系，请从上面的文本中回溯出{target}最早的祖先。注意！你必须先思考推理，然后将正确答案人名放在[]之中。如果你没法找到更加远古的祖先，则使用已知的最远古的祖先。", PromptBuilder.From.user),
+                                ($"\n好的，接下来我会开始推理{target}在上述所有人中的已知最远古的祖先，并将最终用[]符号包围祖先的人名。：\n{response}", PromptBuilder.From.assistant),
+                    ]
+                }, false));
             Console.WriteLine("结果错误!😥");
             return false;
         }
