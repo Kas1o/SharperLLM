@@ -73,7 +73,7 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
             return string.Join(", ", relationships);
         }
     }
-    public List<(PromptBuilder pb, bool Correctness)> generationCache;
+    public List<(PromptBuilder pb, bool Correctness)> generationCache = new();
     public List<FamilyNode> BuildFamilies(int familyCount, int ppf)
     {
         var random = new Random();
