@@ -6,7 +6,7 @@ namespace SharperLLM.Managers;
 public class ConversationManager
 {
     private PromptBuilder _promptBuilder;
-    public PromptBuilder promptBuilder
+    protected PromptBuilder promptBuilder
     {
         get {
             _promptBuilder.Messages = _messages.ToArray();
@@ -21,7 +21,7 @@ public class ConversationManager
 
     public ConversationManager(PromptBuilder promptBuilder)
     {
-        this.promptBuilder = promptBuilder;
+        this._promptBuilder = promptBuilder;
         _messages = new List<(string, PromptBuilder.From)>();
     }
     /// <summary>
@@ -52,8 +52,8 @@ public class ConversationManager
     /// Return the result prompt of this conversation.
     /// </summary>
     /// <returns></returns>
-    public virtual string GetPrompt()
+    public virtual PromptBuilder GetPromptBuilder()
     {
-        return promptBuilder.GetResult();
+        return promptBuilder;
     }
 }

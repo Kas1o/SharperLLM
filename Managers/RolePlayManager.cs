@@ -9,7 +9,6 @@ public class RoleplayManager : ConversationManager
 {
     private string _userRoleName;
     private string _assistantRoleName;
-
     public RoleplayManager(PromptBuilder promptBuilder, string userRoleName, string assistantRoleName)
         : base(promptBuilder)
     {
@@ -18,17 +17,25 @@ public class RoleplayManager : ConversationManager
         ModifyPrefixes();
     }
 
+    public List<(string message, int depth, PromptBuilder.From from)> InsertMessages = new();
+
     private void ModifyPrefixes()
     {
         // 修改InputPrefix和OutputPrefix，添加角色名称
-            base.promptBuilder.InputPrefix += $"【{_userRoleName??"用户"}】";
-            base.promptBuilder.OutputPrefix += $"【{_assistantRoleName??"AI助手"}】";
+            base.promptBuilder.InputPrefix += $"【{_userRoleName??"user"}】";
+            base.promptBuilder.OutputPrefix += $"【{_assistantRoleName??"assistant"}】";
     }
-    public override string GetPrompt()
+    public override PromptBuilder GetPromptBuilder()
     {
-        string prompt = base.GetPrompt();
-        prompt = ReplaceMacros(prompt);
-        return prompt;
+        PromptBuilder promptBuilder = base.promptBuilder;
+        var mes = promptBuilder.Messages.ToList();
+        foreach (var item in InsertMessages)
+        {
+            mes.Insert(mes.Count - item.depth, (item.message, item.from));
+        }
+        mes = mes.Select(a => (ReplaceMacros(a.Item1),a.Item2)).ToList();
+        promptBuilder.Messages = mes.ToArray();
+        return promptBuilder;
     }
     private string ReplaceMacros(string text)
     {
