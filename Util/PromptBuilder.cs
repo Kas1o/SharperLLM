@@ -1,6 +1,7 @@
 using System.Text;
 namespace SharperLLM.Util;
-public class PromptBuilder{
+public class PromptBuilder
+{
     public enum From
     {
         user, assistant, system
@@ -11,7 +12,7 @@ public class PromptBuilder{
     public string ChatStart = "";
     public string InputPrefix = "";
     public string InputSuffix = "";
-    public (string,From)[] Messages = { };
+    public (string, From)[] Messages = { };
     public string? FirstOutputPrefix = null; //若存在,则在第一个输出前缀时使用
     public string OutputPrefix = "";
     public string OutputSuffix = "";
@@ -61,7 +62,7 @@ public class PromptBuilder{
                     break;
             }
         }
-        resultBuilder.Append(!(LatestOutputPrefix == null)? LatestOutputPrefix:OutputPrefix).Append(Environment.NewLine);
+        resultBuilder.Append(!(LatestOutputPrefix == null) ? LatestOutputPrefix : OutputPrefix).Append(Environment.NewLine);
 
         return resultBuilder.ToString();
     }
@@ -87,5 +88,21 @@ public class PromptBuilder{
         SysSeqSuffix = "[/INST] ",
         InputPrefix = "[INST]",
         InputSuffix = "[/INST]"
+    };
+
+    public PromptBuilder Clone() => new PromptBuilder
+    {
+        SysSeqPrefix = this.SysSeqPrefix,
+        System = this.System,
+        SysSeqSuffix = this.SysSeqSuffix,
+        ChatStart = this.ChatStart,
+        InputPrefix = this.InputPrefix,
+        InputSuffix = this.InputSuffix,
+        Messages = this.Messages,
+        FirstOutputPrefix = this.FirstOutputPrefix,
+        OutputPrefix = this.OutputPrefix,
+        OutputSuffix = this.OutputSuffix,
+        LatestOutputPrefix = this.LatestOutputPrefix,
+
     };
 }
