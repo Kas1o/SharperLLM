@@ -23,6 +23,7 @@ public class PromptBuilder
         StringBuilder resultBuilder = new StringBuilder();
 
         // 添加系统起始信息
+        if(System.Trim() != String.Empty)
         resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
 
         bool isFirstOutput = true;
