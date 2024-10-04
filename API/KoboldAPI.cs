@@ -14,7 +14,7 @@ namespace SharperLLM.API
             public float? rep_pen = 1.15f;
             public int? rep_pen_range = 512;
             public int? sampler_seed;
-            public string[]? stop_sequence = { "</s>", "\n\n\n", "<|", "\n*{{user}}", "javascript", "<|im_end|>" };
+            public string[]? stop_sequence = { "</s>", "<|im_end|>" };
             public float? temperature = 0.7f;
             public float? tfs;//无尾
             public float? top_a = 0;

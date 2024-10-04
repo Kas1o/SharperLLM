@@ -31,7 +31,6 @@ namespace SharperLLM.Util.Dataset
                 yield return item.text;
             }
         }
-
         public static string SavePretrainDataset(IEnumerable<string> texts)
         {
             // 创建一个列表来存储动态对象

@@ -7,7 +7,7 @@ public class PromptBuilder
         user, assistant, system
     }
     public string SysSeqPrefix = "";
-    public string System;
+    public string System = "";
     public string SysSeqSuffix = "";
     public string ChatStart = "";
     public string InputPrefix = "";

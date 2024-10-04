@@ -54,6 +54,6 @@ public class ConversationManager
     /// <returns></returns>
     public virtual PromptBuilder GetPromptBuilder()
     {
-        return promptBuilder;
+        return promptBuilder.Clone();
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SharperLLM.API
 {
-    public class iLLMAPI
+    public class iLLMAPI//为啥不是接口? 因为奇怪的编译检查。
     {
         public virtual async IAsyncEnumerable<string> GenerateTextAsync(string prompt)
         {
