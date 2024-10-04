@@ -18,6 +18,25 @@ public class PromptBuilder
     public string OutputSuffix = "";
     public string? LatestOutputPrefix = null; //若存在,则在最后一个输出前缀时使用
 
+    public PromptBuilder()
+    {
+
+    }
+    public PromptBuilder(PromptBuilder template)
+    {
+        SysSeqPrefix = template.SysSeqPrefix;
+        System = template.System;
+        SysSeqSuffix = template.SysSeqSuffix;
+        ChatStart = template.ChatStart;
+        InputPrefix = template.InputPrefix;
+        InputSuffix = template.InputSuffix;
+        Messages = template.Messages;
+        FirstOutputPrefix = template.FirstOutputPrefix;
+        OutputPrefix = template.OutputPrefix;
+        OutputSuffix = template.OutputSuffix;
+        LatestOutputPrefix = template.LatestOutputPrefix;
+    }
+
     public string GetResult()
     {
         StringBuilder resultBuilder = new StringBuilder();
@@ -91,19 +110,5 @@ public class PromptBuilder
         InputSuffix = "[/INST]"
     };
 
-    public PromptBuilder Clone() => new PromptBuilder
-    {
-        SysSeqPrefix = this.SysSeqPrefix,
-        System = this.System,
-        SysSeqSuffix = this.SysSeqSuffix,
-        ChatStart = this.ChatStart,
-        InputPrefix = this.InputPrefix,
-        InputSuffix = this.InputSuffix,
-        Messages = this.Messages,
-        FirstOutputPrefix = this.FirstOutputPrefix,
-        OutputPrefix = this.OutputPrefix,
-        OutputSuffix = this.OutputSuffix,
-        LatestOutputPrefix = this.LatestOutputPrefix,
-
-    };
+    public PromptBuilder Clone() => new PromptBuilder(this);
 }
