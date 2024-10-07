@@ -37,13 +37,76 @@ public class PromptBuilder
         LatestOutputPrefix = template.LatestOutputPrefix;
     }
 
-    public string GetResult()
+    /// <summary>
+    /// 兼容性保留
+    /// </summary>
+    /// <returns></returns>
+    public string GetResult() => GeneratePromptWithLatestOuputPrefix();
+
+    /// <summary>
+    /// 生成只包含现有Messages的Prompt。 LatestOutputPrefix 将被忽略。
+    /// </summary>
+    /// <returns></returns>
+    public string GenerateClearPrompt()
     {
         StringBuilder resultBuilder = new StringBuilder();
 
         // 添加系统起始信息
-        if(System.Trim() != String.Empty)
-        resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
+        if (System.Trim() != String.Empty)
+            resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
+
+        bool isFirstOutput = true;
+
+        foreach (var (message, from) in Messages)
+        {
+            switch (from)
+            {
+                case From.user:
+                    resultBuilder.Append(InputPrefix).Append(Environment.NewLine)
+                        .Append(message)
+                        .Append(InputSuffix).Append(Environment.NewLine);
+                    break;
+                case From.assistant:
+                    // 在第一个输出消息前添加FirstOutputPrefix
+                    if (isFirstOutput && FirstOutputPrefix != null)
+                    {
+                        resultBuilder.Append(FirstOutputPrefix).Append(Environment.NewLine)
+                            .Append(message)
+                            .Append(OutputSuffix).Append(Environment.NewLine);
+                        isFirstOutput = false;
+                    }
+                    else
+                    {
+                        resultBuilder.Append(OutputPrefix).Append(Environment.NewLine)
+                            .Append(message)
+                            .Append(OutputSuffix).Append(Environment.NewLine);
+                    }
+                    break;
+                case From.system:
+                    resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine)
+                        .Append(message)
+                        .Append(SysSeqSuffix);
+                    break;
+                default:
+                    // 处理未知来源的消息类型，根据需要可以抛出异常或忽略
+                    break;
+            }
+        }
+
+        return resultBuilder.ToString();
+    }
+
+    /// <summary>
+    /// 生成除了现有Messages外，还带有生成前缀的 Prompt。
+    /// </summary>
+    /// <returns></returns>
+    public string GeneratePromptWithLatestOuputPrefix()
+    {
+        StringBuilder resultBuilder = new StringBuilder();
+
+        // 添加系统起始信息
+        if (System.Trim() != String.Empty)
+            resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
 
         bool isFirstOutput = true;
 
