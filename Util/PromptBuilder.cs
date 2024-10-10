@@ -47,7 +47,7 @@ public class PromptBuilder
     /// 生成只包含现有Messages的Prompt。 LatestOutputPrefix 将被忽略。
     /// </summary>
     /// <returns></returns>
-    public string GenerateClearPrompt()
+    public string GenerateCleanPrompt()
     {
         StringBuilder resultBuilder = new StringBuilder();
 
