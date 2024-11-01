@@ -37,11 +37,11 @@ public class PromptBuilder
         LatestOutputPrefix = template.LatestOutputPrefix;
     }
 
-    /// <summary>
-    /// 兼容性保留
-    /// </summary>
-    /// <returns></returns>
-    public string GetResult() => GeneratePromptWithLatestOuputPrefix();
+	/// <summary>
+	/// 兼容性保留，将被重定向至GeneratePromptWithLatestOuputPrefix
+	/// </summary>
+	/// <returns></returns>
+	public string GetResult() => GeneratePromptWithLatestOuputPrefix();
 
     /// <summary>
     /// 生成只包含现有Messages的Prompt。 LatestOutputPrefix 将被忽略。
@@ -52,6 +52,7 @@ public class PromptBuilder
         StringBuilder resultBuilder = new StringBuilder();
 
         // 添加系统起始信息
+        if (System != null)
         if (System.Trim() != String.Empty)
             resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
 
@@ -105,6 +106,7 @@ public class PromptBuilder
         StringBuilder resultBuilder = new StringBuilder();
 
         // 添加系统起始信息
+        if (System != null)
         if (System.Trim() != String.Empty)
             resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
 
