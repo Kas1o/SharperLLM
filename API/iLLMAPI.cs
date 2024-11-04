@@ -14,7 +14,7 @@ namespace SharperLLM.API
             throw new NotImplementedException();
             yield return "";//应对奇怪的编译检查。必须写一个。
         }
-        public virtual string GenerateText(string prompt)
+        public virtual string GenerateText(string prompt, int retry = 0)
         {
             throw new NotImplementedException();
         }

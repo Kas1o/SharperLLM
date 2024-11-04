@@ -37,8 +37,8 @@ namespace SharperLLM.API
             public Dictionary<int, float>? logit_bias;// token id => bias.
             public string prompt;// modify on GenerateFunc
         }
+        
         public KoboldAPIConf conf = new();
-
         public Uri _uri;
         public string uri
         {
@@ -95,10 +95,10 @@ namespace SharperLLM.API
                 }
             }
         }
-        public override string GenerateText(string prompt)
+        public override string GenerateText(string prompt, int retry = 0)
         {
             conf.prompt = prompt;
-            var client = new HttpClient();
+            var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(999)};
             client.BaseAddress = new Uri(uri + "/v1/generate");
 
             var request = new HttpRequestMessage(HttpMethod.Post, uri+ "/v1/generate")
@@ -137,6 +137,11 @@ namespace SharperLLM.API
             }
             catch (Exception ex)
             {
+                if (retry > 0)
+                {
+                    return GenerateText(prompt, retry - 1);
+                }
+
                 // 将其他异常也直接抛出
                 throw new ApplicationException($"An error occurred while processing the request:{ex.Message}", ex);
             }

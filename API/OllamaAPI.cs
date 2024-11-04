@@ -25,8 +25,9 @@ namespace SharperLLM.API
         {
             model = modelName
         };
-        public override string GenerateText(string prompt)
+        public override string GenerateText(string prompt, int retry = 0)
         {
+            if (retry != 0) throw new NotImplementedException();
             return Task.Run(async () =>
             {
                 var result = new StringBuilder();
