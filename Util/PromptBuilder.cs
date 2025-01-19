@@ -1,6 +1,6 @@
 using System.Text;
 namespace SharperLLM.Util;
-public class PromptBuilder
+public struct PromptBuilder
 {
     public enum From
     {
@@ -21,20 +21,6 @@ public class PromptBuilder
     public PromptBuilder()
     {
 
-    }
-    public PromptBuilder(PromptBuilder template)
-    {
-        SysSeqPrefix = template.SysSeqPrefix;
-        System = template.System;
-        SysSeqSuffix = template.SysSeqSuffix;
-        ChatStart = template.ChatStart;
-        InputPrefix = template.InputPrefix;
-        InputSuffix = template.InputSuffix;
-        Messages = template.Messages;
-        FirstOutputPrefix = template.FirstOutputPrefix;
-        OutputPrefix = template.OutputPrefix;
-        OutputSuffix = template.OutputSuffix;
-        LatestOutputPrefix = template.LatestOutputPrefix;
     }
 
 	/// <summary>
@@ -174,6 +160,4 @@ public class PromptBuilder
         InputPrefix = "[INST]",
         InputSuffix = "[/INST]"
     };
-
-    public PromptBuilder Clone() => new PromptBuilder(this);
 }
