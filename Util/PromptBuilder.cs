@@ -30,7 +30,7 @@ public class PromptBuilder
         ChatStart = template.ChatStart;
         InputPrefix = template.InputPrefix;
         InputSuffix = template.InputSuffix;
-        Messages = template.Messages;
+        Messages = template.Messages.Select(a=>a).ToArray();
         FirstOutputPrefix = template.FirstOutputPrefix;
         OutputPrefix = template.OutputPrefix;
         OutputSuffix = template.OutputSuffix;
