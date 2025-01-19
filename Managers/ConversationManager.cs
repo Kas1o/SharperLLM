@@ -48,4 +48,12 @@ public class ConversationManager
     {
         _messages.Add((message, PromptBuilder.From.assistant));
     }
+    /// <summary>
+    /// Return the result prompt of this conversation.
+    /// </summary>
+    /// <returns></returns>
+    public virtual PromptBuilder GetPromptBuilder()
+    {
+        return promptBuilder.Clone();
+    }
 }
