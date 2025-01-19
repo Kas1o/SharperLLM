@@ -25,7 +25,7 @@ public class RoleplayManager : ConversationManager
             base.promptBuilder.InputPrefix += $"【{_userRoleName??"user"}】";
             base.promptBuilder.OutputPrefix += $"【{_assistantRoleName??"assistant"}】";
     }
-    public override PromptBuilder GetPromptBuilder()
+    public override PromptBuilder GeneratePromptBuilder()
     {
         PromptBuilder promptBuilder = base.promptBuilder;
         var mes = promptBuilder.Messages.ToList();

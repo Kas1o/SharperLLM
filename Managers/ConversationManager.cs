@@ -52,7 +52,7 @@ public class ConversationManager
     /// Return the result prompt of this conversation.
     /// </summary>
     /// <returns></returns>
-    public virtual PromptBuilder GetPromptBuilder()
+    public virtual PromptBuilder GeneratePromptBuilder()
     {
         return promptBuilder.Clone();
     }
