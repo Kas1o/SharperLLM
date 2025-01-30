@@ -5,13 +5,14 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using SharperLLM.Util;
+using Newtonsoft.Json.Linq;
 
 namespace SharperLLM.API
 {
     /// <summary>
     /// example url: "http://api.openai.com/v1"
     /// </summary>
-    public class OpenAIAPI(string url, string apiKey, string model) : iLLMAPI
+    public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : iLLMAPI
     {
         public override string GenerateChatReply(PromptBuilder promptBuilder)
         {
@@ -93,5 +94,37 @@ namespace SharperLLM.API
                 }
             }
         }
-    }
+
+		[Obsolete("对于新版本的OpenAI模型，这个接口无效，仅用于使用老版本OpenAI接口的API")]
+		public override string GenerateText(string prompt, int retry = 0)
+		{
+			var uri = new Uri(url);
+			var requestBody = new
+			{
+				model,
+				prompt,
+				max_tokens,
+				temperature
+			};
+
+			HttpClient client = new();
+			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+			var jsonContent = Newtonsoft.Json.JsonConvert.SerializeObject(requestBody);
+			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+			var response =  client.PostAsync(uri, content).Result;
+			var responseString = response.Content.ReadAsStringAsync().Result;
+
+			if (response.IsSuccessStatusCode)
+			{
+				JObject jsonResponse = JObject.Parse(responseString);
+				return jsonResponse["choices"][0]["text"].ToString();
+			}
+			else
+			{
+				throw new Exception($"Error calling OpenAI API: {responseString}");
+			}
+		}
+	}
 }
