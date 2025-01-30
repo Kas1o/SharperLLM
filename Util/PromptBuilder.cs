@@ -4,7 +4,7 @@ public class PromptBuilder
 {
     public enum From
     {
-        user, assistant, system
+        user, assistant, system, tool
     }
     public string SysSeqPrefix = "";
     public string System = "";
