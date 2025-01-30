@@ -7,7 +7,6 @@ namespace SharperLLM.API
 		public virtual async IAsyncEnumerable<string> GenerateTextAsync(string prompt)
 		{
 			throw new NotImplementedException();
-
 		}
 		public virtual string GenerateText(string prompt, int retry = 0)
 		{

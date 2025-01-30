@@ -10,5 +10,6 @@ namespace SharperLLM.API
 	{
 		public string content;
 		public string tool;
+		public Dictionary<string, string> param;
 	}
 }
