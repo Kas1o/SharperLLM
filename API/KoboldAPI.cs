@@ -9,7 +9,7 @@ namespace SharperLLM.API
     {
         public class KoboldAPIConf
         {
-            public int? max_context_length = 4096;
+            public int? max_context_length = 8192;
             public int? max_length = 1024;
             public float? rep_pen = 1.15f;
             public int? rep_pen_range = 512;
@@ -55,7 +55,7 @@ namespace SharperLLM.API
             this.conf = conf;
             _uri = CreateLooseUri(uri);
         }
-        public KoboldAPI(string uri)
+        public  (string uri)
         {
             _uri = CreateLooseUri(uri);
         }

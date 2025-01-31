@@ -4,7 +4,7 @@ public class PromptBuilder
 {
     public enum From
     {
-        user, assistant, system, tool
+        user, assistant, system, tool_call, tool_result
     }
     public string SysSeqPrefix = "";
     public string System = "";
@@ -17,7 +17,12 @@ public class PromptBuilder
     public string OutputPrefix = "";
     public string OutputSuffix = "";
     public string? LatestOutputPrefix = null; //若存在,则在最后一个输出前缀时使用
-
+    public string? ToolsPrefix = null;
+    public string? ToolsSuffix = null;
+    public string? ToolsCallPrefix = null;
+    public string? ToolsCallSuffix = null;
+    public string? ToolResultSeqPrefix = null;
+    public string? ToolResultSeqSuffix = null;
     public PromptBuilder()
     {
 
@@ -151,8 +156,8 @@ public class PromptBuilder
 
         return resultBuilder.ToString();
     }
-
-    public static PromptBuilder ChatML => new PromptBuilder()
+	#region 一堆自带模板
+	public static PromptBuilder ChatML => new PromptBuilder()
     {
         SysSeqPrefix = "<|im_start|>system",
         SysSeqSuffix = "<|im_end|>\n",
@@ -174,6 +179,20 @@ public class PromptBuilder
         InputPrefix = "[INST]",
         InputSuffix = "[/INST]"
     };
-
-    public PromptBuilder Clone() => new PromptBuilder(this);
+    public static PromptBuilder Mistralv7 => new PromptBuilder
+    {
+        SysSeqPrefix = "[SYSTEM_PROMPT]",
+        SysSeqSuffix = "[/SYSTEM_PROMPT]",
+        InputPrefix = "[INST]",
+        InputSuffix = "[/INST]",
+        ToolsPrefix = "[AVAILABLE_TOOLS]",
+		ToolsSuffix = "[/AVAILABLE_TOOLS]",
+        ToolsCallPrefix = "[TOOL_CALLS]",
+        ToolsCallSuffix = "[TOOL_CALLS]</s>",
+		ToolResultSeqPrefix = "[TOOL]",
+        ToolResultSeqSuffix = "[/TOOL]",
+        OutputSuffix = "</s>"
+    };
+	#endregion
+	public PromptBuilder Clone() => new PromptBuilder(this);
 }
