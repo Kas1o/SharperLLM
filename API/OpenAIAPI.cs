@@ -12,9 +12,9 @@ namespace SharperLLM.API
     /// <summary>
     /// example url: "http://api.openai.com/v1"
     /// </summary>
-    public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : iLLMAPI
+    public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : ILLMAPI
     {
-        public override string GenerateChatReply(PromptBuilder promptBuilder)
+        public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
         {
             return Task.Run(async () =>
             {
@@ -27,7 +27,7 @@ namespace SharperLLM.API
             }).GetAwaiter().GetResult();
         }
 
-        public override async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
+        public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
         {
             var targetURL = $"{url}/chat/completions";
             var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
@@ -96,7 +96,7 @@ namespace SharperLLM.API
         }
 
 		[Obsolete("对于新版本的OpenAI模型，这个接口无效，仅用于使用老版本OpenAI接口的API")]
-		public override string GenerateText(string prompt, int retry = 0)
+		public async Task<string> GenerateText(string prompt, int retry = 0)
 		{
 			var uri = new Uri(url);
 			var requestBody = new
@@ -125,6 +125,21 @@ namespace SharperLLM.API
 			{
 				throw new Exception($"Error calling OpenAI API: {responseString}");
 			}
+		}
+
+		IAsyncEnumerable<string> ILLMAPI.GenerateTextStream(string prompt)
+		{
+			throw new NotImplementedException();
+		}
+
+		Task<ResponseEx> ILLMAPI.GenereteEx()
+		{
+			throw new NotImplementedException();
+		}
+
+		IAsyncEnumerable<ResponseEx> ILLMAPI.GenereteExStream()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

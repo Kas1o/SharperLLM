@@ -9,7 +9,7 @@ namespace SharperLLM.Util.BenchMark;
 // 3family
 // 4family
 // 5family
-public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
+public class NIAHFamilyBench(ILLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
 {
     class FamilyNode
     {
@@ -213,7 +213,7 @@ public class NIAHFamilyBench(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, 
         var prompt = pb.GetResult();
         prompt += $"\n好的,{target}最远古的祖先是\"";
         string response = string.Empty;
-        response = api.GenerateText(prompt);
+        response = api.GenerateText(prompt).Result;
         if (logCallback != null)
             logCallback($"{anc}|{response}");
         else

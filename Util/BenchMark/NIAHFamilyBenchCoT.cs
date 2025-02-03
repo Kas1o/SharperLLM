@@ -9,7 +9,7 @@ namespace SharperLLM.Util.BenchMark;
 // 3family
 // 4family
 // 5family
-public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
+public class NIAHFamilyBenchCoT(ILLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
 {
     public class FamilyNode
     {

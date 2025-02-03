@@ -9,7 +9,7 @@ namespace SharperLLM.Util.BenchMark;
 
 public class NIAHBench
 {
-    private iLLMAPI _api;
+    private ILLMAPI _api;
     private int _textLength;
     private int _interval;
     private int _repetitions;
@@ -17,7 +17,7 @@ public class NIAHBench
     private string _paddingString;
     private PromptBuilder _pb;
 
-    public NIAHBench(iLLMAPI api, int textLength, int interval, PromptBuilder pb, int repetitions = 1, string hiddenString = null, string paddingString  = null)
+    public NIAHBench(ILLMAPI api, int textLength, int interval, PromptBuilder pb, int repetitions = 1, string hiddenString = null, string paddingString  = null)
     {
         _api = api;
         _textLength = textLength;

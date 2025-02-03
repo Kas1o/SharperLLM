@@ -8,7 +8,7 @@ using SharperLLM.Util;
 
 namespace SharperLLM.API
 {
-    public class OllamaAPI(string uri, string modelName) : iLLMAPI
+    public class OllamaAPI(string uri, string modelName) : ILLMAPI
     {
         public class OllamaConf// request parameters
         {
@@ -25,10 +25,9 @@ namespace SharperLLM.API
         {
             model = modelName
         };
-        public override string GenerateText(string prompt, int retry = 0)
+        public async Task<string> GenerateText(string prompt, int retry = 0)
         {
-            if (retry != 0) throw new NotImplementedException();
-            return Task.Run(async () =>
+            try
             {
                 var result = new StringBuilder();
                 await foreach (var item in GenerateTextStream(prompt))
@@ -36,11 +35,20 @@ namespace SharperLLM.API
                     result.Append(item);
                 }
                 return result.ToString();
-            }).GetAwaiter().GetResult();
+            }
+            catch
+            {
+                if (retry > 0)
+                {
+                    return await GenerateText(prompt, retry-1);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
-
-
-        public override async IAsyncEnumerable<string> GenerateTextStream(string prompt)
+        public async IAsyncEnumerable<string> GenerateTextStream(string prompt)
         {
             conf.prompt = prompt;
 
@@ -74,5 +82,25 @@ namespace SharperLLM.API
             }
 
         }
-    }
+
+		IAsyncEnumerable<string> ILLMAPI.GenerateChatReplyStream(PromptBuilder promptBuilder)
+		{
+			throw new NotImplementedException();
+		}
+
+		Task<string> ILLMAPI.GenerateChatReply(PromptBuilder promptBuilder)
+		{
+			throw new NotImplementedException();
+		}
+
+		Task<ResponseEx> ILLMAPI.GenereteEx()
+		{
+			throw new NotImplementedException();
+		}
+
+		IAsyncEnumerable<ResponseEx> ILLMAPI.GenereteExStream()
+		{
+			throw new NotImplementedException();
+		}
+	}
 }

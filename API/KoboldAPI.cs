@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SharperLLM.Util;
 using System.Net;
 using System.Text;
 
 namespace SharperLLM.API
 {
-    public class KoboldAPI : iLLMAPI
+    public class KoboldAPI : ILLMAPI
     {
         public class KoboldAPIConf
         {
@@ -55,12 +56,12 @@ namespace SharperLLM.API
             this.conf = conf;
             _uri = CreateLooseUri(uri);
         }
-        public  (string uri)
+        public  KoboldAPI(string uri)
         {
             _uri = CreateLooseUri(uri);
         }
 
-        public override async IAsyncEnumerable<string> GenerateTextStream(string prompt)
+        public async IAsyncEnumerable<string> GenerateTextStream(string prompt)
         {
             conf.prompt = prompt;
             var client = new HttpClient();
@@ -95,7 +96,7 @@ namespace SharperLLM.API
                 }
             }
         }
-        public override string GenerateText(string prompt, int retry = 0)
+        public async Task<string> GenerateText(string prompt, int retry = 0)
         {
             conf.prompt = prompt;
             var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(999)};
@@ -139,7 +140,7 @@ namespace SharperLLM.API
             {
                 if (retry > 0)
                 {
-                    return GenerateText(prompt, retry - 1);
+                    return await GenerateText(prompt, retry - 1);
                 }
 
                 // 将其他异常也直接抛出
@@ -171,5 +172,25 @@ namespace SharperLLM.API
                 throw new ArgumentException($"The provided string '{looseUriString}' could not be parsed into a valid URI.");
             }
         }
-    }
+
+		IAsyncEnumerable<string> ILLMAPI.GenerateChatReplyStream(PromptBuilder promptBuilder)
+		{
+			throw new NotImplementedException();
+		}
+
+		Task<string> ILLMAPI.GenerateChatReply(PromptBuilder promptBuilder)
+		{
+			throw new NotImplementedException();
+		}
+
+		Task<ResponseEx> ILLMAPI.GenereteEx()
+		{
+			throw new NotImplementedException();
+		}
+
+		IAsyncEnumerable<ResponseEx> ILLMAPI.GenereteExStream()
+		{
+			throw new NotImplementedException();
+		}
+	}
 }
