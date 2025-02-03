@@ -203,7 +203,7 @@ public class NIAHFamilyBenchCoT(iLLMAPI api, PromptBuilder pb, int maxFamilyCoun
         ];
 
         string response = string.Empty;
-        foreach (var token in api.GenerateChatReplyAsync(pb).ToBlockingEnumerable())
+        foreach (var token in api.GenerateChatReplyStream(pb).ToBlockingEnumerable())
         {
             response += token;
         }

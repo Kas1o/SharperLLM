@@ -19,7 +19,7 @@ namespace SharperLLM.API
             return Task.Run(async () =>
             {
                 var result = new StringBuilder();
-                await foreach (var item in GenerateChatReplyAsync(promptBuilder))
+                await foreach (var item in GenerateChatReplyStream(promptBuilder))
                 {
                     result.Append(item);
                 }
@@ -27,7 +27,7 @@ namespace SharperLLM.API
             }).GetAwaiter().GetResult();
         }
 
-        public override async IAsyncEnumerable<string> GenerateChatReplyAsync(PromptBuilder promptBuilder)
+        public override async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
         {
             var targetURL = $"{url}/chat/completions";
             var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();

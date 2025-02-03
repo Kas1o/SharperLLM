@@ -2,9 +2,9 @@
 
 namespace SharperLLM.API
 {
-	public class iLLMAPI//为啥不是接口? 因为奇怪的编译检查。
+	public interface iLLMAPI//为啥不是接口? 因为奇怪的编译检查。
 	{
-		public virtual async IAsyncEnumerable<string> GenerateTextAsync(string prompt)
+		public async IAsyncEnumerable<string> GenerateTextStream(string prompt)
 		{
 			throw new NotImplementedException();
 		}
@@ -12,7 +12,7 @@ namespace SharperLLM.API
 		{
 			throw new NotImplementedException();
 		}
-		public virtual async IAsyncEnumerable<string> GenerateChatReplyAsync(PromptBuilder promptBuilder)
+		public virtual async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
 		{
 			throw new NotImplementedException();
 		}
@@ -24,7 +24,7 @@ namespace SharperLLM.API
 		{
 			throw new NotImplementedException();
 		}
-		public virtual async IAsyncEnumerable<ResponseEx> GenereteExAsync()
+		public virtual async IAsyncEnumerable<ResponseEx> GenereteExStream()
 		{
 			throw new NotImplementedException();
 		}

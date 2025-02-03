@@ -79,7 +79,7 @@ public class NIAHBench
                 var prompt = _pb.GetResult();
                 prompt +="\n好的,被隐藏的关键信息的内容是：";
                 string response = string.Empty;
-                await foreach (var token in _api.GenerateTextAsync(prompt))
+                await foreach (var token in _api.GenerateTextStream(prompt))
                 {
                     response += token;
                 }

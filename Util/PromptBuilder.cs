@@ -93,7 +93,17 @@ public class PromptBuilder
                         .Append(message)
                         .Append(SysSeqSuffix);
                     break;
-                default:
+				case From.tool_call:
+					resultBuilder.Append(ToolsCallPrefix).Append(Environment.NewLine)
+						.Append(message)
+						.Append(ToolsCallPrefix);
+					break;
+				case From.tool_result:
+					resultBuilder.Append(ToolResultSeqPrefix).Append(Environment.NewLine)
+						.Append(message)
+						.Append(ToolResultSeqSuffix);
+					break;
+				default:
                     // 处理未知来源的消息类型，根据需要可以抛出异常或忽略
                     break;
             }
@@ -146,6 +156,16 @@ public class PromptBuilder
                     resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine)
                         .Append(message)
                         .Append(SysSeqSuffix);
+                    break;
+                case From.tool_call:
+                    resultBuilder.Append(ToolsCallPrefix).Append(Environment.NewLine)
+                        .Append(message)
+                        .Append(ToolsCallPrefix);
+                    break;
+                case From.tool_result:
+                    resultBuilder.Append(ToolResultSeqPrefix).Append(Environment.NewLine)
+                        .Append(message)
+                        .Append(ToolResultSeqSuffix);
                     break;
                 default:
                     // 处理未知来源的消息类型，根据需要可以抛出异常或忽略

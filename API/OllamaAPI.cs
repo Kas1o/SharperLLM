@@ -31,7 +31,7 @@ namespace SharperLLM.API
             return Task.Run(async () =>
             {
                 var result = new StringBuilder();
-                await foreach (var item in GenerateTextAsync(prompt))
+                await foreach (var item in GenerateTextStream(prompt))
                 {
                     result.Append(item);
                 }
@@ -40,7 +40,7 @@ namespace SharperLLM.API
         }
 
 
-        public override async IAsyncEnumerable<string> GenerateTextAsync(string prompt)
+        public override async IAsyncEnumerable<string> GenerateTextStream(string prompt)
         {
             conf.prompt = prompt;
 

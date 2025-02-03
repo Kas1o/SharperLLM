@@ -60,7 +60,7 @@ namespace SharperLLM.API
             _uri = CreateLooseUri(uri);
         }
 
-        public override async IAsyncEnumerable<string> GenerateTextAsync(string prompt)
+        public override async IAsyncEnumerable<string> GenerateTextStream(string prompt)
         {
             conf.prompt = prompt;
             var client = new HttpClient();
