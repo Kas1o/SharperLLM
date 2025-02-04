@@ -10,7 +10,7 @@ namespace SharperLLM.Util
 	{
 		public List<(CustomRole cr, string content)> Messages = new();
 
-		string GenerateCleanPrompt()
+		public string GenerateCleanPrompt()
 		{
 			var sb = new StringBuilder();
 			foreach (var message in Messages)
@@ -23,7 +23,7 @@ namespace SharperLLM.Util
 			return sb.ToString();
 		}
 
-		string GeneratePromptWithGenerationPrefix(CustomRole generationRole)
+		public string GeneratePromptWithGenerationPrefix(CustomRole generationRole)
 		{
 			return GenerateCleanPrompt() + generationRole.StartSequence;
 		}
