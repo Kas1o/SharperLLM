@@ -184,12 +184,12 @@ namespace SharperLLM.API
 			throw new NotImplementedException();
 		}
 
-		Task<ResponseEx> ILLMAPI.GenereteEx()
+		Task<ResponseEx> ILLMAPI.GenerateEx(PromptBuilder pb)
 		{
 			throw new NotImplementedException();
 		}
 
-		IAsyncEnumerable<ResponseEx> ILLMAPI.GenereteExStream()
+		IAsyncEnumerable<ResponseEx> ILLMAPI.GenerateExStream(PromptBuilder pb)
 		{
 			throw new NotImplementedException();
 		}
