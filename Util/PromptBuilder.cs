@@ -2,6 +2,11 @@ using System.Text;
 namespace SharperLLM.Util;
 public class PromptBuilder
 {
+	#region const
+	public const string tool_usage = "[\r\n  {\r\n    \"name\": \"example_tool_name\",\r\n    \"arguments\":{\r\n        \"example_argument\": \"example_value\"\r\n   },\r\n   {\r\n    \"tool\": \"example_tool_name_2\",\r\n    \"args\":{\r\n        \"example_argument\": \"example_value\"\r\n   },\r\n}";
+	#endregion
+
+
 	public enum From
 	{
 		user, assistant, system, tool_call, tool_result, tools
@@ -230,6 +235,47 @@ public class PromptBuilder
 		ToolResultSeqSuffix = "[/TOOL]",
 		OutputSuffix = "</s>"
 	};
+
+	public static PromptBuilder ChatMLTool => new PromptBuilder()
+	{
+		SysSeqPrefix = "<|im_start|>system",
+		SysSeqSuffix = "<|im_end|>",
+		InputPrefix = "<|im_start|>user",
+		InputSuffix = "<|im_end|>",
+		OutputPrefix = "<|im_start|>assistant",
+		OutputSuffix = "<|im_end|>",
+		ToolsPrefix = "<|im_start|>available_tools",
+		ToolsSuffix = "<|im_end|>",
+		ToolsCallPrefix = "<|im_start|>tool_call",
+		ToolsCallSuffix = "<|im_end|>",
+		ToolResultSeqPrefix = "<|im_start|>tool",
+		ToolResultSeqSuffix = "<|im_end|>",
+	};
+	public static PromptBuilder DeepSeekTool => new PromptBuilder
+	{
+		SysSeqPrefix = "<｜User｜>",
+		SysSeqSuffix = "",
+		InputPrefix = "<｜User｜>",
+		InputSuffix = "",
+		OutputPrefix = "<｜Assistant｜>",
+		OutputSuffix = "<| end_of_sentence |>",
+		ToolsPrefix = "<| available_tools |>",
+		ToolsSuffix = "<| end_of_tools |>",
+		ToolsCallPrefix = "<| tool_call |>",
+		ToolsCallSuffix = "<| end_of_tool_call |>",
+		ToolResultSeqPrefix = "<| tool_result |>",
+		ToolResultSeqSuffix = "<| end_of_tool_result |>",
+	};
+	public static PromptBuilder Gemma2and3 => new PromptBuilder
+	{
+		SysSeqPrefix = "<start_of_turn>system",
+		SysSeqSuffix = "<end_of_turn>",
+		InputPrefix = "<start_of_turn>user",
+		InputSuffix = "<end_of_turn>",
+		OutputPrefix = "<start_of_turn>model",
+		OutputSuffix = "<end_of_turn>"
+	};
+
 	#endregion
 	public PromptBuilder Clone() => new PromptBuilder(this);
 }

@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SharperLLM.FunctionCalling;
 using SharperLLM.Util;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SharperLLM.API
 {
@@ -17,7 +19,7 @@ namespace SharperLLM.API
 			public int? sampler_seed { get; set; }
 			public string[] stop_sequence { get; set; } = new string[] { "</s>", "<|im_end|>" };
 
-	public float? temperature { get; set; } = 0.7f;
+			public float? temperature { get; set; } = 0.7f;
 			public float? tfs { get; set; } //无尾
 			public float? top_a { get; set; } = 0;
 			public int? top_k { get; set; } = 20;
@@ -60,6 +62,31 @@ namespace SharperLLM.API
 		public KoboldAPI(string uri)
 		{
 			_uri = CreateLooseUri(uri);
+		}
+		private static Uri CreateLooseUri(string looseUriString)
+		{
+			looseUriString = looseUriString.TrimEnd('/');
+			if (string.IsNullOrWhiteSpace(looseUriString))
+			{
+				throw new ArgumentException("URI string cannot be null, empty, or whitespace.", nameof(looseUriString));
+			}
+
+			// 检查是否已包含http://或https://，如果没有则添加http://
+			if (!looseUriString.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+				!looseUriString.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+			{
+				looseUriString = "http://" + looseUriString;
+			}
+
+			Uri uri;
+			if (Uri.TryCreate(looseUriString, UriKind.Absolute, out uri))
+			{
+				return uri;
+			}
+			else
+			{
+				throw new ArgumentException($"The provided string '{looseUriString}' could not be parsed into a valid URI.");
+			}
 		}
 
 		public async IAsyncEnumerable<string> GenerateTextStream(string prompt)
@@ -148,48 +175,97 @@ namespace SharperLLM.API
 				throw new ApplicationException($"An error occurred while processing the request:{ex.Message}", ex);
 			}
 		}
-		private static Uri CreateLooseUri(string looseUriString)
-		{
-			looseUriString = looseUriString.TrimEnd('/');
-			if (string.IsNullOrWhiteSpace(looseUriString))
-			{
-				throw new ArgumentException("URI string cannot be null, empty, or whitespace.", nameof(looseUriString));
-			}
 
-			// 检查是否已包含http://或https://，如果没有则添加http://
-			if (!looseUriString.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
-				!looseUriString.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-			{
-				looseUriString = "http://" + looseUriString;
-			}
-
-			Uri uri;
-			if (Uri.TryCreate(looseUriString, UriKind.Absolute, out uri))
-			{
-				return uri;
-			}
-			else
-			{
-				throw new ArgumentException($"The provided string '{looseUriString}' could not be parsed into a valid URI.");
-			}
-		}
-
-		IAsyncEnumerable<string> ILLMAPI.GenerateChatReplyStream(PromptBuilder promptBuilder)
+		public IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
 		{
 			throw new NotImplementedException();
 		}
 
-		Task<string> ILLMAPI.GenerateChatReply(PromptBuilder promptBuilder)
+		public Task<string> GenerateChatReply(PromptBuilder promptBuilder)
 		{
 			throw new NotImplementedException();
 		}
 
-		Task<ResponseEx> ILLMAPI.GenerateEx(PromptBuilder pb)
+		public async Task<ResponseEx> GenerateEx(PromptBuilder pb)
 		{
-			throw new NotImplementedException();
+			int retry = 5;
+			while (retry > 0) {
+				try
+				{
+					var result = await GenerateText(pb.GeneratePromptWithLatestOuputPrefix());
+					// 如果调用了工具，则处理。
+					if (result.Contains(pb.ToolsCallPrefix))
+					{
+						List<Tool> toolCallings;
+						StringBuilder contentBuilder;
+						ProcessContentAndTool(pb, result, out toolCallings, out contentBuilder);
+						if (toolCallings.Count < 1) throw new Exception();// 说明有调用工具，但格式错误。
+						return new ResponseEx()
+						{
+							toolCallings = toolCallings,
+							content = contentBuilder.ToString().Trim()
+						};
+					}
+					else//如果没有调用工具，则添加工具前缀再进行生成
+					{
+						var cpb = pb.Clone();
+						cpb.Messages = cpb.Messages.Append((result, PromptBuilder.From.assistant)).ToArray();
+						var prompt = cpb.GenerateCleanPrompt() + cpb.ToolsCallPrefix;
+						var result2 = await GenerateText(prompt);
+						return new ResponseEx()
+						{
+							toolCallings = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Tool>>(result2),
+							content = result
+						};
+					}
+				}
+				catch
+				{
+					retry--;
+				}
+			}
+			return null;
 		}
 
-		IAsyncEnumerable<ResponseEx> ILLMAPI.GenerateExStream(PromptBuilder pb)
+		private static void ProcessContentAndTool(PromptBuilder pb, string result, out List<Tool> toolCallings, out StringBuilder contentBuilder)
+		{
+			// 初始化输出参数
+			toolCallings = new List<Tool>();
+			contentBuilder = new System.Text.StringBuilder(result); // 初始时包含全部内容
+
+			// 定义正则表达式模式，并启用单行模式（. 匹配包括换行符在内的所有字符）
+			var toolPattern = new Regex($@"{Regex.Escape(pb.ToolsCallPrefix)}(.*?){Regex.Escape(pb.ToolsCallSuffix)}", RegexOptions.Singleline);
+
+			// 查找所有匹配项
+			var matches = toolPattern.Matches(result);
+
+			// 反向遍历以避免删除过程中影响索引
+			for (int i = matches.Count - 1; i >= 0; i--)
+			{
+				Match match = matches[i];
+				try
+				{
+					// 尝试解析为Tool对象列表
+					var tools = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Tool>>(match.Groups[1].Value);
+					if (tools != null)
+					{
+						toolCallings.InsertRange(0, tools); // 在前面插入以保持原始顺序
+															// 从contentBuilder中移除已处理的工具调用部分
+						contentBuilder.Remove(match.Index, match.Length);
+					}
+				}
+				catch
+				{
+					// 解析失败时跳过该块
+					continue;
+				}
+			}
+
+			// 移除可能因删除操作导致的多余空白
+			contentBuilder.Replace("  ", " ");
+		}
+
+		public IAsyncEnumerable<ResponseEx> GenerateExStream(PromptBuilder pb)
 		{
 			throw new NotImplementedException();
 		}
