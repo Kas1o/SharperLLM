@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace SharperLLM.Util
 {
-    public class ChatMessage()
+	public record struct ChatMessage()
     {
-		public string Content { get; set; } // The content of the message
+		public required string Content { get; set; } // The content of the message
         public string ImageBase64 { get; set; }
 
         public static implicit operator ChatMessage(string content)
