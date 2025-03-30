@@ -17,7 +17,7 @@ public class PromptBuilder
 	public string ChatStart = "";
 	public string InputPrefix = "";
 	public string InputSuffix = "";
-	public (string, From)[] Messages = { };
+	public (ChatMessage, From)[] Messages = { };
 	public string? FirstOutputPrefix = null; //若存在,则在第一个输出前缀时使用
 	public string OutputPrefix = "";
 	public string OutputSuffix = "";
