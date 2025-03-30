@@ -17,12 +17,12 @@ public class ConversationManager
             _promptBuilder = value;
         }
     }
-    private List<(string, PromptBuilder.From)> _messages;
+    private List<(ChatMessage, PromptBuilder.From)> _messages;
 
     public ConversationManager(PromptBuilder promptBuilder)
     {
         this._promptBuilder = promptBuilder;
-        _messages = new List<(string, PromptBuilder.From)>();
+        _messages = new();
     }
     /// <summary>
     /// Insert a Message at end of the conversation.

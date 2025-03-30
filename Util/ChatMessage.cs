@@ -19,5 +19,10 @@ namespace SharperLLM.Util
 				ImageBase64 = "" // Default to empty string if no image is provided
 			};
 		}
+
+		public static implicit operator string(ChatMessage message)
+		{
+			return message.Content;
+		}
 	}
 }

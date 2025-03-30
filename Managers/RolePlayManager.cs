@@ -33,7 +33,7 @@ public class RoleplayManager : ConversationManager
         {
             mes.Insert(mes.Count - item.depth, (item.message, item.from));
         }
-        mes = mes.Select(a => (ReplaceMacros(a.Item1),a.Item2)).ToList();
+        mes = mes.Select(a => ((ChatMessage)(ReplaceMacros(a.Item1)),a.Item2)).ToList();
         promptBuilder.Messages = mes.ToArray();
         return promptBuilder;
     }

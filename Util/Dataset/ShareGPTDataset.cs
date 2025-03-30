@@ -13,7 +13,7 @@
         public void WriteToPromptBuilder(PromptBuilder originPromptBuilder)
         {
             originPromptBuilder.System = system;
-            originPromptBuilder.Messages = conversations.Select(selector: x => (x.value, x.from switch
+            originPromptBuilder.Messages = conversations.Select(selector: x => ((ChatMessage)x.value, x.from switch
             {
                 "system" => PromptBuilder.From.system,
                 "assistant" => PromptBuilder.From.assistant,
