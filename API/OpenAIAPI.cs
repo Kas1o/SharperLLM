@@ -286,7 +286,18 @@ namespace SharperLLM.API
 			List<dynamic> dynamics = new();
 			foreach (var message in messages)
 			{
-				if(message.Item1.ImageBase64 != null)
+				if(message.Item1 is ToolChatMessage toolChatMessage)
+				{
+					dynamics.Add(new
+					{
+						type = "function_call_output",
+						call_id = toolChatMessage.id,
+						output = toolChatMessage.Content
+					});
+				}
+				else
+				{
+					if(message.Item1.ImageBase64 != null)
 				{
 					dynamics.Add(new
 					{
@@ -311,7 +322,7 @@ namespace SharperLLM.API
 						}
 					});
 				}
-				else
+					else
 				{
 					dynamics.Add(new
 					{
@@ -323,6 +334,7 @@ namespace SharperLLM.API
 						},
 						content = message.Item1.Content
 					});
+				}
 				}
 			}
 			return dynamics;

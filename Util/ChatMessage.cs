@@ -16,7 +16,7 @@ namespace SharperLLM.Util
 			return new ChatMessage
 			(
 				_content : content,
-				_imageBase64 : "" // Default to empty string if no image is provided
+				_imageBase64 : null
 			);
 		}
 
