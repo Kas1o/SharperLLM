@@ -346,7 +346,7 @@ namespace SharperLLM.API
 								{
 									type = x.parameter.type.ToString().ToLower(),
 									description = x.parameter.description,
-									@enum = x.parameter.@enum != null? string.Join(",", x.parameter.@enum) : null
+									@enum = x.parameter.@enum
 								}
 							),
 							required = x.parameters.Where(x => x.required).Select(x => x.parameter.name).ToList()
@@ -381,7 +381,7 @@ namespace SharperLLM.API
 			public string type { get; set; }
 			public string description { get; set; }
 			[JsonProperty("enum")]
-			public string @enum { get; set; }
+			public List<string> @enum { get; set; }
 		}
 	}
 }
