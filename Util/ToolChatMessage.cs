@@ -8,8 +8,8 @@ namespace SharperLLM.Util
 {
     public class ToolChatMessage : ChatMessage
     {
-        public ToolChatMessage(string _content, string _id, string _imageBase64)
-            :base( _content, _imageBase64 )
+        public ToolChatMessage(string _content, string _id)
+            :base( _content, null)
 		{
             this.id = _id;
         }

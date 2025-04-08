@@ -27,5 +27,6 @@ namespace SharperLLM.API
 		public required string name { get; set; }
 		public required string id { get; set; }
 		public string? arguments { get; set; }//in json object
+		public int index { get; set; }
 	}
 }

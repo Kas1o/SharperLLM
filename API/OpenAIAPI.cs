@@ -102,12 +102,15 @@ namespace SharperLLM.API
 						{
 							id = item["id"].ToString(),
 							name = item["function"]["name"].ToString(),
-							arguments = item["function"]["arguments"]?.ToString()
+							arguments = item["function"]["arguments"]?.ToString(),
+							index = item["index"].ToObject<int>()
 						});
 					}
 				}
 				else
 				{
+					// 再判断是否存在tool_calls
+					if (jsonResponse["choices"][0]["message"]["tool_calls"] != null)
 					toolCalls.Add(new ToolCall
 					{
 						id = jsonResponse["choices"][0]["message"]["tool_calls"]["id"].ToString(),
@@ -286,13 +289,33 @@ namespace SharperLLM.API
 			List<dynamic> dynamics = new();
 			foreach (var message in messages)
 			{
+				if(message.Item1 is ToolCallChatMessage tccm)
+				{
+					dynamics.Add(new
+					{
+						role = "assistant",
+						content = "",
+						tool_calls = tccm.toolCalls.Select(x => new
+						{
+							index = x.index,
+							id = x.id,
+							type = "function",
+							function = new
+							{
+								name = x.name,
+								arguments = x.arguments
+							}
+						})
+					});
+				}
+				else
 				if(message.Item1 is ToolChatMessage toolChatMessage)
 				{
 					dynamics.Add(new
 					{
-						type = "function_call_output",
-						call_id = toolChatMessage.id,
-						output = toolChatMessage.Content
+						role = "tool",
+						tool_call_id = toolChatMessage.id,
+						content = toolChatMessage.Content
 					});
 				}
 				else
