@@ -6,9 +6,14 @@ using System.Threading.Tasks;
 
 namespace SharperLLM.Util
 {
-    struct ToolChatMessage 
+    class ToolChatMessage : ChatMessage
     {
+        public ToolChatMessage(string _content, string _id, string _imageBase64)
+            :base( _content, _imageBase64 )
+		{
+            this.id = _id;
+        }
+
         public string id;
-        public string content;
     }
 }

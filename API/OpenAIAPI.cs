@@ -26,16 +26,34 @@ namespace SharperLLM.API
 
 		public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
         {
-            return Task.Run(async () =>
-            {
-                var result = new StringBuilder();
-                await foreach (var item in GenerateChatReplyStream(promptBuilder))
-                {
-                    result.Append(item);
-                }
-                return result.ToString();
-            }).GetAwaiter().GetResult();
-        }
+            var targetURL = $"{url}/chat/completions";
+			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
+			var requestBody = new
+			{
+				model,
+				messages,
+				temperature,
+				max_tokens,
+				stream = false
+			};
+			using (var client = new HttpClient())
+			{
+				client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+				var jsonContent = JsonConvert.SerializeObject(requestBody);
+				var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+				var response = await client.PostAsync(targetURL, content);
+				var responseString = await response.Content.ReadAsStringAsync();
+				if (response.IsSuccessStatusCode)
+				{
+					JObject jsonResponse = JObject.Parse(responseString);
+					return jsonResponse["choices"][0]["message"]["content"].ToString();
+				}
+				else
+				{
+					throw new Exception($"Error calling OpenAI API: {responseString}");
+				}
+			}
+		}
 
         public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
         {
