@@ -1,3 +1,5 @@
+using SharperLLM.FunctionCalling;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 namespace SharperLLM.Util;
 public class PromptBuilder
@@ -9,7 +11,7 @@ public class PromptBuilder
 
 	public enum From
 	{
-		user, assistant, system, tool_call, tool_result, tools
+		user, assistant, system, tool_call, tool_result
 	}
 	public string SysSeqPrefix = "";
 	public string System = "";
@@ -28,6 +30,8 @@ public class PromptBuilder
 	public string? ToolsCallSuffix = null;
 	public string? ToolResultSeqPrefix = null;
 	public string? ToolResultSeqSuffix = null;
+	public Func<List<Tool>,string>? AvailableToolsFormatter = null;
+	public List<Tool>? AvailableTools = null;
 	public PromptBuilder()
 	{
 
@@ -51,7 +55,7 @@ public class PromptBuilder
 		ToolsCallSuffix = template.ToolsCallSuffix;
 		ToolResultSeqPrefix = template.ToolResultSeqPrefix;
 		ToolResultSeqSuffix = template.ToolResultSeqSuffix;
-
+		AvailableToolsFormatter = template.AvailableToolsFormatter;
 	}
 
 	/// <summary>
@@ -72,6 +76,21 @@ public class PromptBuilder
 		if (System != null)
 			if (System.Trim() != String.Empty)
 				resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
+
+		// 添加Tools
+		if (AvailableTools != null)
+		{
+			if (AvailableToolsFormatter != null)
+			{
+				resultBuilder.Append(ToolsPrefix).Append(Environment.NewLine)
+					.Append(AvailableToolsFormatter(AvailableTools))
+					.Append(ToolsSuffix).Append(Environment.NewLine);
+			}
+			else
+			{
+				throw new Exception("AvailableToolsFormatter is null, please set it to a function that can format the tools.");
+			}
+		}
 
 		bool isFirstOutput = true;
 
@@ -114,11 +133,6 @@ public class PromptBuilder
 					resultBuilder.Append(ToolResultSeqPrefix).Append(Environment.NewLine)
 						.Append(message)
 						.Append(ToolResultSeqSuffix);
-					break;
-				case From.tools:
-					resultBuilder.Append(ToolsPrefix).Append(Environment.NewLine)
-						.Append(message)
-						.Append(ToolsSuffix);
 					break;
 				default:
 					// 处理未知来源的消息类型，根据需要可以抛出异常或忽略
@@ -142,6 +156,21 @@ public class PromptBuilder
 			if (System.Trim() != String.Empty)
 				resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine).Append(System).Append(SysSeqSuffix).Append(Environment.NewLine);
 
+		// 添加Tools
+		if (AvailableTools != null)
+		{
+			if (AvailableToolsFormatter != null)
+			{
+				resultBuilder.Append(ToolsPrefix).Append(Environment.NewLine)
+					.Append(AvailableToolsFormatter(AvailableTools))
+					.Append(ToolsSuffix).Append(Environment.NewLine);
+			}
+			else
+			{
+				throw new Exception("AvailableToolsFormatter is null, please set it to a function that can format the tools.");
+			}
+		}
+
 		bool isFirstOutput = true;
 
 		foreach (var (message, from) in Messages)
@@ -183,11 +212,6 @@ public class PromptBuilder
 					resultBuilder.Append(ToolResultSeqPrefix).Append(Environment.NewLine)
 						.Append(message)
 						.Append(ToolResultSeqSuffix);
-					break;
-				case From.tools:
-					resultBuilder.Append(ToolsPrefix).Append(Environment.NewLine)
-						.Append(message)
-						.Append(ToolsSuffix);
 					break;
 				default:
 					// 处理未知来源的消息类型，根据需要可以抛出异常或忽略

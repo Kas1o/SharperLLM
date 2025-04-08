@@ -8,7 +8,25 @@ namespace SharperLLM.FunctionCalling
 {
 	public class Tool
 	{
-		public string name { get; set; }
-		public Dictionary<string, string> arguments { get; set; } = new();
+		public required string name { get; set; }
+		public required string description { get; set; }
+		public List<(ToolParameter parameter,bool required)>? parameters { get; set; }
+	}
+
+	public class ToolParameter
+	{
+		ParameterType type;
+		string description;
+		string name;
+		List<string> @enum;
+	}
+
+	public enum ParameterType
+	{
+		String,
+		Number,
+		Boolean,
+		Array,
+		Object
 	}
 }

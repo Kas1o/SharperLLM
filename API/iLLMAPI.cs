@@ -10,5 +10,7 @@ namespace SharperLLM.API
 		public Task<string> GenerateChatReply(PromptBuilder promptBuilder);
 		public Task<ResponseEx> GenerateEx(PromptBuilder pb);
 		public IAsyncEnumerable<ResponseEx> GenerateExStream(PromptBuilder pb);
+		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb);
+		public Task<ResponseEx> GenerateChatEx(PromptBuilder pb);
 	}
 }
