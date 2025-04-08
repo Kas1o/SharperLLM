@@ -15,10 +15,10 @@ namespace SharperLLM.FunctionCalling
 
 	public class ToolParameter
 	{
-		ParameterType type;
-		string description;
-		string name;
-		List<string> @enum;
+		public ParameterType type;
+		public string description;
+		public string name;
+		public List<string> @enum;
 	}
 
 	public enum ParameterType
