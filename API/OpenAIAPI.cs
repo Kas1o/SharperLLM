@@ -14,7 +14,17 @@ namespace SharperLLM.API
     /// </summary>
     public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : ILLMAPI
     {
-        public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
+		public Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
+		{
+			throw new NotImplementedException();
+		}
+
+		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb)
+		{
+			throw new NotImplementedException();
+		}
+
+		public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
         {
             return Task.Run(async () =>
             {
@@ -128,16 +138,6 @@ namespace SharperLLM.API
 		}
 
 		IAsyncEnumerable<string> ILLMAPI.GenerateTextStream(string prompt)
-		{
-			throw new NotImplementedException();
-		}
-
-		Task<ResponseEx> ILLMAPI.GenerateEx(PromptBuilder pb)
-		{
-			throw new NotImplementedException();
-		}
-
-		IAsyncEnumerable<ResponseEx> ILLMAPI.GenerateExStream(PromptBuilder pb)
 		{
 			throw new NotImplementedException();
 		}

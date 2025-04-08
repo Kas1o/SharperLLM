@@ -186,86 +186,12 @@ namespace SharperLLM.API
 			throw new NotImplementedException();
 		}
 
-		public async Task<ResponseEx> GenerateEx(PromptBuilder pb)
+		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb)
 		{
-			int retry = 5;
-			while (retry > 0) {
-				try
-				{
-					var result = await GenerateText(pb.GeneratePromptWithLatestOuputPrefix());
-					// 如果调用了工具，则处理。
-					if (result.Contains(pb.ToolsCallPrefix))
-					{
-						List<Tool> toolCallings;
-						StringBuilder contentBuilder;
-						ProcessContentAndTool(pb, result, out toolCallings, out contentBuilder);
-						if (toolCallings.Count < 1) throw new Exception();// 说明有调用工具，但格式错误。
-						return new ResponseEx()
-						{
-							toolCallings = toolCallings,
-							content = contentBuilder.ToString().Trim()
-						};
-					}
-					else//如果没有调用工具，则添加工具前缀再进行生成
-					{
-						var cpb = pb.Clone();
-						cpb.Messages = cpb.Messages.Append((result, PromptBuilder.From.assistant)).ToArray();
-						var prompt = cpb.GenerateCleanPrompt() + cpb.ToolsCallPrefix;
-						var result2 = await GenerateText(prompt);
-						return new ResponseEx()
-						{
-							toolCallings = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Tool>>(result2),
-							content = result
-						};
-					}
-				}
-				catch
-				{
-					retry--;
-				}
-			}
-			return null;
+			throw new NotImplementedException();
 		}
 
-		private static void ProcessContentAndTool(PromptBuilder pb, string result, out List<Tool> toolCallings, out StringBuilder contentBuilder)
-		{
-			// 初始化输出参数
-			toolCallings = new List<Tool>();
-			contentBuilder = new System.Text.StringBuilder(result); // 初始时包含全部内容
-
-			// 定义正则表达式模式，并启用单行模式（. 匹配包括换行符在内的所有字符）
-			var toolPattern = new Regex($@"{Regex.Escape(pb.ToolsCallPrefix)}(.*?){Regex.Escape(pb.ToolsCallSuffix)}", RegexOptions.Singleline);
-
-			// 查找所有匹配项
-			var matches = toolPattern.Matches(result);
-
-			// 反向遍历以避免删除过程中影响索引
-			for (int i = matches.Count - 1; i >= 0; i--)
-			{
-				Match match = matches[i];
-				try
-				{
-					// 尝试解析为Tool对象列表
-					var tools = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Tool>>(match.Groups[1].Value);
-					if (tools != null)
-					{
-						toolCallings.InsertRange(0, tools); // 在前面插入以保持原始顺序
-															// 从contentBuilder中移除已处理的工具调用部分
-						contentBuilder.Remove(match.Index, match.Length);
-					}
-				}
-				catch
-				{
-					// 解析失败时跳过该块
-					continue;
-				}
-			}
-
-			// 移除可能因删除操作导致的多余空白
-			contentBuilder.Replace("  ", " ");
-		}
-
-		public IAsyncEnumerable<ResponseEx> GenerateExStream(PromptBuilder pb)
+		public Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
 		{
 			throw new NotImplementedException();
 		}
