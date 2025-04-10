@@ -24,7 +24,7 @@ namespace SharperLLM.API
 				messages,
 				temperature,
 				max_tokens,
-				tools = BuildTools(pb.AvailableTools),
+				tools = pb.AvailableTools != null? BuildTools(pb.AvailableTools): null,
 				stream = false
 			};
 
@@ -91,10 +91,10 @@ namespace SharperLLM.API
 
 				// Extract tool_calls and finish_reason
 				var toolCalls = new List<ToolCall>();
-				var isToolsArray = jsonResponse["choices"][0]["message"]["tool_calls"] is JArray;
+				var isToolsArray = jsonResponse["choices"]?[0]?["message"]?["tool_calls"] is JArray ;
 				if (isToolsArray)
 				{
-					foreach (var item in jsonResponse["choices"][0]["message"]["tool_calls"])
+					foreach (var item in jsonResponse["choices"]?[0]?["message"]?["tool_calls"])
 					{
 						toolCalls.Add(new ToolCall
 						{
@@ -108,7 +108,7 @@ namespace SharperLLM.API
 				else
 				{
 					// 再判断是否存在tool_calls
-					if (jsonResponse["choices"][0]["message"]["tool_calls"] != null)
+					if (jsonResponse["choices"]?[0]?["message"]?	["tool_calls"] != null)
 						toolCalls.Add(new ToolCall
 						{
 							id = jsonResponse["choices"][0]["message"]["tool_calls"]["id"].ToString(),
