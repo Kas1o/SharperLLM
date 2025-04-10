@@ -4,6 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>SharperLLM</Title>
+    <PackageProjectUrl>https://github.com/Kas1o/SharperLLM</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
