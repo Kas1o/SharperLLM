@@ -1,21 +1,19 @@
-﻿using SharperLLM.API;
-using Newtonsoft.Json;
-using System.Diagnostics;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SharperLLM.FunctionCalling;
+using SharperLLM.Util;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
-using SharperLLM.Util;
-using Newtonsoft.Json.Linq;
-using SharperLLM.FunctionCalling;
 
 namespace SharperLLM.API
 {
-    /// <summary>
-    /// example url: "http://api.openai.com/v1"
-    /// </summary>
-    public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : ILLMAPI
-    {
-		#region api
+	/// <summary>
+	/// example url: "http://api.openai.com/v1"
+	/// </summary>
+	public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : ILLMAPI
+	{
+		#region basic api
 		public async Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
 		{
 			var targetURL = $"{url}/chat/completions";
@@ -29,7 +27,7 @@ namespace SharperLLM.API
 				tools = BuildTools(pb.AvailableTools),
 				stream = false
 			};
-			
+
 			using var client = new HttpClient();
 			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 			//序列化且忽略null字段
@@ -111,15 +109,15 @@ namespace SharperLLM.API
 				{
 					// 再判断是否存在tool_calls
 					if (jsonResponse["choices"][0]["message"]["tool_calls"] != null)
-					toolCalls.Add(new ToolCall
-					{
-						id = jsonResponse["choices"][0]["message"]["tool_calls"]["id"].ToString(),
-						name = jsonResponse["choices"][0]["message"]["tool_calls"]["function"]["name"].ToString(),
-						arguments = jsonResponse["choices"][0]["message"]["tool_calls"]["function"]["arguments"]?.ToString()
-					});
+						toolCalls.Add(new ToolCall
+						{
+							id = jsonResponse["choices"][0]["message"]["tool_calls"]["id"].ToString(),
+							name = jsonResponse["choices"][0]["message"]["tool_calls"]["function"]["name"].ToString(),
+							arguments = jsonResponse["choices"][0]["message"]["tool_calls"]["function"]["arguments"]?.ToString()
+						});
 				}
 
-					var finishReason = jsonResponse["choices"][0]["finish_reason"].ToObject<string>() switch
+				var finishReason = jsonResponse["choices"][0]["finish_reason"].ToObject<string>() switch
 				{
 					"stop" => FinishReason.Stop,
 					"length" => FinishReason.Length,
@@ -129,7 +127,8 @@ namespace SharperLLM.API
 					_ => throw new Exception($"Unknown finish reason: {jsonResponse["choices"][0]["finish_reason"]}"),
 				};
 
-				return new ResponseEx {
+				return new ResponseEx
+				{
 					content = jsonResponse["choices"][0]["message"]["content"]?.ToString() ?? string.Empty,
 					FinishReason = finishReason,
 					toolCallings = toolCalls,
@@ -147,8 +146,8 @@ namespace SharperLLM.API
 		}
 
 		public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
-        {
-            var targetURL = $"{url}/chat/completions";
+		{
+			var targetURL = $"{url}/chat/completions";
 			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
 			var requestBody = new
 			{
@@ -177,73 +176,73 @@ namespace SharperLLM.API
 			}
 		}
 
-        public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
-        {
-            var targetURL = $"{url}/chat/completions";
-            var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
+		public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
+		{
+			var targetURL = $"{url}/chat/completions";
+			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
 
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+			using (var client = new HttpClient())
+			{
+				client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+				client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 
-                var request = new HttpRequestMessage(HttpMethod.Post, targetURL)
-                {
-                    Content = new StringContent(JsonConvert.SerializeObject(new
-                    {
-                        model = model,
-                        messages = messages,
-                        stream = true
-                    }), Encoding.UTF8, "application/json")
-                };
+				var request = new HttpRequestMessage(HttpMethod.Post, targetURL)
+				{
+					Content = new StringContent(JsonConvert.SerializeObject(new
+					{
+						model = model,
+						messages = messages,
+						stream = true
+					}), Encoding.UTF8, "application/json")
+				};
 
-                using (var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None))
-                {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        throw new Exception($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
-                    }
+				using (var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None))
+				{
+					if (!response.IsSuccessStatusCode)
+					{
+						throw new Exception($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+					}
 
-                    // Read the response body as a stream.
-                    using (var responseStream = await response.Content.ReadAsStreamAsync())
-                    using (var reader = new StreamReader(responseStream, Encoding.UTF8))
-                    {
-                        string? line;
-                        while ((line = await reader.ReadLineAsync()) != null)
-                        {
-                            if (string.IsNullOrWhiteSpace(line)) continue;
+					// Read the response body as a stream.
+					using (var responseStream = await response.Content.ReadAsStreamAsync())
+					using (var reader = new StreamReader(responseStream, Encoding.UTF8))
+					{
+						string? line;
+						while ((line = await reader.ReadLineAsync()) != null)
+						{
+							if (string.IsNullOrWhiteSpace(line)) continue;
 
-                            // Handle SSE data lines, which look like: "data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"text\"},\"finish_reason\":null}],\"object\":\"chat.completion.chunk\",\"created\":1677652943,\"model\":\"gpt-3.5-turbo-0613\"}"
-                            var match = Regex.Match(line, @"^data: (.*)$");
-                            if (match.Success)
-                            {
-                                var json = match.Groups[1].Value;
+							// Handle SSE data lines, which look like: "data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"text\"},\"finish_reason\":null}],\"object\":\"chat.completion.chunk\",\"created\":1677652943,\"model\":\"gpt-3.5-turbo-0613\"}"
+							var match = Regex.Match(line, @"^data: (.*)$");
+							if (match.Success)
+							{
+								var json = match.Groups[1].Value;
 
-                                dynamic? data = 1;
-                                try
-                                {
-                                    data = JsonConvert.DeserializeObject(json);
-                                }
-                                catch
-                                {
-                                    if (json == "[DONE]") break;
-                                    else throw;
-                                }
+								dynamic? data = 1;
+								try
+								{
+									data = JsonConvert.DeserializeObject(json);
+								}
+								catch
+								{
+									if (json == "[DONE]") break;
+									else throw;
+								}
 
-                                if(data != null)
-                                foreach (var choice in data.choices)
-                                {
-                                    if (choice.delta != null && choice.delta.content != null)
-                                    {
-                                        yield return choice.delta.content;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+								if (data != null)
+									foreach (var choice in data.choices)
+									{
+										if (choice.delta != null && choice.delta.content != null)
+										{
+											yield return choice.delta.content;
+										}
+									}
+							}
+						}
+					}
+				}
+			}
+		}
 
 		[Obsolete("对于新版本的OpenAI模型，这个接口无效，仅用于使用老版本OpenAI接口的API")]
 		public async Task<string> GenerateText(string prompt, int retry = 0)
@@ -263,7 +262,7 @@ namespace SharperLLM.API
 			var jsonContent = Newtonsoft.Json.JsonConvert.SerializeObject(requestBody);
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-			var response =  client.PostAsync(uri, content).Result;
+			var response = client.PostAsync(uri, content).Result;
 			var responseString = response.Content.ReadAsStringAsync().Result;
 
 			if (response.IsSuccessStatusCode)
@@ -284,12 +283,34 @@ namespace SharperLLM.API
 
 		#endregion
 
-		List<dynamic> BuildMessages(IEnumerable<(ChatMessage,PromptBuilder.From)> messages)
+		#region extra api
+
+		public async Task<List<string>> GetModelNameList()
+		{
+			var targetURL = $"{url}/models";
+			using var client = new HttpClient();
+			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+			var response = await client.GetAsync(targetURL);
+			var responseString = await response.Content.ReadAsStringAsync();
+			if (response.IsSuccessStatusCode)
+			{
+				JObject jsonResponse = JObject.Parse(responseString);
+				var modelNames = jsonResponse["data"].Select(x => x["id"].ToString()).ToList();
+				return modelNames;
+			}
+			else
+			{
+				throw new Exception($"Error calling OpenAI API: {responseString}");
+			}
+		}
+
+		#endregion
+		List<dynamic> BuildMessages(IEnumerable<(ChatMessage, PromptBuilder.From)> messages)
 		{
 			List<dynamic> dynamics = new();
 			foreach (var message in messages)
 			{
-				if(message.Item1 is ToolCallChatMessage tccm)
+				if (message.Item1 is ToolCallChatMessage tccm)
 				{
 					dynamics.Add(new
 					{
@@ -309,7 +330,7 @@ namespace SharperLLM.API
 					});
 				}
 				else
-				if(message.Item1 is ToolChatMessage toolChatMessage)
+				if (message.Item1 is ToolChatMessage toolChatMessage)
 				{
 					dynamics.Add(new
 					{
@@ -320,18 +341,18 @@ namespace SharperLLM.API
 				}
 				else
 				{
-					if(message.Item1.ImageBase64 != null)
-				{
-					dynamics.Add(new
+					if (message.Item1.ImageBase64 != null)
 					{
-						role = message.Item2 switch
+						dynamics.Add(new
 						{
-							PromptBuilder.From.system => "system",
-							PromptBuilder.From.user => "user",
-							PromptBuilder.From.assistant => "assistant",
-						},
-						input = new dynamic[]
-						{
+							role = message.Item2 switch
+							{
+								PromptBuilder.From.system => "system",
+								PromptBuilder.From.user => "user",
+								PromptBuilder.From.assistant => "assistant",
+							},
+							input = new dynamic[]
+							{
 							new
 							{
 								type = "input_text",
@@ -342,22 +363,22 @@ namespace SharperLLM.API
 								type = "input_image",
 								image_url = $"data:image/jpeg;base64,{message.Item1.ImageBase64}"
 							}
-						}
-					});
-				}
+							}
+						});
+					}
 					else
-				{
-					dynamics.Add(new
 					{
-						role = message.Item2 switch
+						dynamics.Add(new
 						{
-							PromptBuilder.From.system => "system",
-							PromptBuilder.From.user => "user",
-							PromptBuilder.From.assistant => "assistant",
-						},
-						content = message.Item1.Content
-					});
-				}
+							role = message.Item2 switch
+							{
+								PromptBuilder.From.system => "system",
+								PromptBuilder.From.user => "user",
+								PromptBuilder.From.assistant => "assistant",
+							},
+							content = message.Item1.Content
+						});
+					}
 				}
 			}
 			return dynamics;
@@ -408,7 +429,7 @@ namespace SharperLLM.API
 		struct OToolFunctionParameter
 		{
 			public string type { get; set; }
-			public Dictionary<string,OToolFunctionParameterProperty> properties { get; set; }
+			public Dictionary<string, OToolFunctionParameterProperty> properties { get; set; }
 			public List<string> required { get; set; }
 		}
 		struct OToolFunctionParameterProperty
