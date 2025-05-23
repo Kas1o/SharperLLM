@@ -9,8 +9,8 @@ namespace SharperLLM.Util
 {
 	public class ChatMessage
 	{
-		public string Content { get; private set; }// The content of the message
-		public string ImageBase64 { get; private set; }
+		public string Content { get; set; }// The content of the message
+		public string ImageBase64 { get; set; }
 
 		public static implicit operator ChatMessage(string content)
 		{
