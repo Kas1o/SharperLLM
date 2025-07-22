@@ -22,6 +22,25 @@ namespace SharperLLM.Util.Dataset
             return JsonConvert.SerializeObject(dataset);
         }
 
+        public static List<AlpacaDataset> LoadAlpacaDataset(string datasetContent)
+        {
+            try
+            {
+                var entries = JsonConvert.DeserializeObject<List<AlpacaDataset>>(datasetContent);
+                return entries;
+            }
+            catch
+            {
+                try// 尝试以 JSONL 解析。
+                {
+                    return datasetContent.Split("\n").Select(x => JsonConvert.DeserializeObject<AlpacaDataset>(x)).ToList();
+                }
+                catch
+                {
+                    throw;
+                }
+            }
+        }
         public static IEnumerable<string> LoadPretrainDataset(string datasetContent)
         {
             List<dynamic> obj = JsonConvert.DeserializeObject<List<dynamic>>(datasetContent);

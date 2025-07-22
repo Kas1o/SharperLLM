@@ -247,7 +247,7 @@ namespace SharperLLM.API
 		[Obsolete("对于新版本的OpenAI模型，这个接口无效，仅用于使用老版本OpenAI接口的API")]
 		public async Task<string> GenerateText(string prompt, int retry = 0)
 		{
-			var uri = new Uri(url);
+			var uri = new Uri(url + "/completions");
 			var requestBody = new
 			{
 				model,
