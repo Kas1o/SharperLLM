@@ -179,7 +179,7 @@ namespace SharperLLM.API
 		public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
 		{
 			var targetURL = $"{url}/chat/completions";
-			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
+			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1.Content }).ToArray();
 
 			using (var client = new HttpClient())
 			{
