@@ -11,7 +11,7 @@ namespace SharperLLM.API
 	/// <summary>
 	/// example url: "http://api.openai.com/v1"
 	/// </summary>
-	public class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : ILLMAPI
+	public record class OpenAIAPI(string url, string apiKey, string model, float temperature = 0.7f, int max_tokens = 8192) : ILLMAPI
 	{
 		#region basic api
 		public async Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
