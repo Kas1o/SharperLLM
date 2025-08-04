@@ -8,17 +8,18 @@
 ### 概览：
 - 连接多种LLM API
 - 对LLM进行测试
-- 读取导出数据集（待实现）
+- 读取导出多种类型数据集
+- 启动OpenAI兼容服务器
 
 ### 列表：
 | 功能 | 当前状况 |
 | --- | --- |
-| OpenAI对话API | 流式 |
+| OpenAI对话API | 支持、流式 |
 | OpenAI文本补全API | 支持 |
 | 特定API支持（如Ollama、Kobold） | 进行中 |
 | 数据集导出 | ShareGPT |
 | 模型能力测试 | 进行中 |
-| 数据集导入 | ShareGPT |
+| 数据集导入 | ShareGPT、Alpaca |
 
 ## API示例
 
@@ -44,17 +45,36 @@ Console.WriteLine(api.GenerateChatReply(pb));
 ### Ollama API示例
 ```csharp
 OllamaAPI ollamaApi = new("http://localhost:114514", "your_model_name");
-string prompt = "请生成一段文本。";
-string result = await ollamaApi.GenerateText(prompt);
+
+PromptBuilder pb = new PromptBuilder(PromptBuilder.ChatML)
+{
+    Messages =
+    [
+        ("你是一个强大的人工智能。", PromptBuilder.From.system),
+        ("我去，人工智能！", PromptBuilder.From.user),
+        ("好神奇啊！", PromptBuilder.From.user),
+    ]
+};
+
+string result = await ollamaApi.GenerateText(pb.GeneratePromptWithLatestOuputPrefix());
 Console.WriteLine(result);
 ```
 
 ### Kobold API示例
 ```csharp
 KoboldAPI koboldApi = new("http://localhost:5000");
-KoboldAPI.KoboldAPIConf conf = new();
-conf.prompt = "请生成一段文本。";
-string result = await koboldApi.GenerateText(conf.prompt);
+
+PromptBuilder pb = new PromptBuilder(PromptBuilder.ChatML)
+{
+    Messages =
+    [
+        ("你是一个强大的人工智能。", PromptBuilder.From.system),
+        ("我去，人工智能！", PromptBuilder.From.user),
+        ("好神奇啊！", PromptBuilder.From.user),
+    ]
+};
+
+string result = await koboldApi.GenerateText(pb.GeneratePromptWithLatestOuputPrefix());
 Console.WriteLine(result);
 ```
 
