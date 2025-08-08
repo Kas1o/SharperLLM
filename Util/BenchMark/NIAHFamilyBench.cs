@@ -49,10 +49,10 @@ public class NIAHFamilyBench(ILLMAPI api, PromptBuilder pb, int maxFamilyCount, 
                     {
                         relationships.Add(new Random().Next(4) switch
                         {
-                            0 => $"{node.person}是{node.parent.person}的孩子",
-                            1 => $"{node.person}是{node.parent.person}的女儿",
-                            2 => $"{node.person}是{node.parent.person}的儿子",
-                            3 => $"{node.parent.person}是{node.person}的父母",
+                            0 => $"{node.person}是{node.parent.person}的子节点",
+                            1 => $"{node.person}是一个{node.parent.person}的下面的节点",
+                            2 => $"{node.person}是{node.parent.person}的后代节点",
+                            3 => $"{node.parent.person}是{node.person}的父节点",
                         });
 
                     }
@@ -207,7 +207,7 @@ public class NIAHFamilyBench(ILLMAPI api, PromptBuilder pb, int maxFamilyCount, 
         pb.System = "你是一个AI助手，下面请仔细阅读以下文本，并回答问题";
         pb.Messages = [
             (desc, PromptBuilder.From.system),
-        ($"上面的文本中描述了一个或多个家族的关系，请从上面的文本中找到{target}的最远古的祖先。注意请直接给出答案。", PromptBuilder.From.user),
+        ($"上面的文本中描述了一个或多个树形结构节点间的关系，请从上面的文本中找到{target}的最远古的祖先（父节点）。注意请直接给出答案。", PromptBuilder.From.user),
         ];
 
         var prompt = pb.GetResult();
