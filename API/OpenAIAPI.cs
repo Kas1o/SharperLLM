@@ -148,7 +148,7 @@ namespace SharperLLM.API
 		public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
 		{
 			var targetURL = $"{url}/chat/completions";
-			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1 }).ToArray();
+			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1.Content }).ToArray();
 			var requestBody = new
 			{
 				model,
