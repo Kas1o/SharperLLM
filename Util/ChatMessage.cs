@@ -33,5 +33,10 @@ namespace SharperLLM.Util
 		{
 			return message.Content;
 		}
+
+		public override string ToString()
+		{
+			return ((ImageBase64 != null) ? "[image]" : "" )+ $"{Content}";
+		}
 	}
 }
