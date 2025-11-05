@@ -10,36 +10,70 @@ namespace SharperLLM.API
 {
 	public class KoboldAPI : ILLMAPI
 	{
-		public class KoboldAPIConf
+		public class KoboldAPIConf : ICloneable
 		{
-			public int? max_context_length { get; set; } = 8192;
-			public int? max_length { get; set; } = 1024;
-			public float? rep_pen { get; set; } = 1.15f;
-			public int? rep_pen_range { get; set; } = 512;
-			public int? sampler_seed { get; set; }
-			public string[] stop_sequence { get; set; } = new string[] { "</s>", "<|im_end|>" };
+			public int?					  max_context_length { get; set; } = 8192;
+			public int?					  max_length         { get; set; } = 1024;
+			public float?				  rep_pen            { get; set; } = 1.15f;
+			public int?					  rep_pen_range      { get; set; } = 512;
+			public int?					  sampler_seed       { get; set; }
+			public string[]				  stop_sequence      { get; set; } = new string[] { "</s>", "<|im_end|>" };
+			public float?				  temperature        { get; set; } = 0.7f;
+			public float?				  tfs                { get; set; } //无尾
+			public float?				  top_a              { get; set; } = 0;
+			public int?					  top_k              { get; set; } = 20;
+			public float?				  top_p              { get; set; }
+			public float?				  min_p              { get; set; }
+			public float?				  typical            { get; set; } = 1; //典型
+			public float?				  dynatemp_range     { get; set; } = 0;
+			public float?				  smoothing_factor   { get; set; } = 0;
+			public float?				  dynatemp_exponent  { get; set; } = 1;
+			public int?					  mirostat           { get; set; } = 0;
+			public int?					  mirostat_tau       { get; set; } = 5;
+			public float?				  mirostat_eta       { get; set; } = 0.46f;
+			public string				  genkey             { get; set; }
+			public string				  grammar            { get; set; }
+			public string				  images             { get; set; } //base64
+			public bool?				  trim_stop          { get; set; }
+			public bool?				  bypass_eos         { get; set; }
+			public string[]				  banned_tokens      { get; set; }
+			public Dictionary<int, float> logit_bias         { get; set; } // token id => bias.
+			public string                 prompt             { get; set; } // do not change
 
-			public float? temperature { get; set; } = 0.7f;
-			public float? tfs { get; set; } //无尾
-			public float? top_a { get; set; } = 0;
-			public int? top_k { get; set; } = 20;
-			public float? top_p { get; set; }
-			public float? min_p { get; set; }
-			public float? typical { get; set; } = 1; //典型
-			public float? dynatemp_range { get; set; } = 0;
-			public float? smoothing_factor { get; set; } = 0;
-			public float? dynatemp_exponent { get; set; } = 1;
-			public int? mirostat { get; set; } = 0;
-			public int? mirostat_tau { get; set; } = 5;
-			public float? mirostat_eta { get; set; } = 0.46f;
-			public string genkey { get; set; }
-			public string grammar { get; set; }
-			public string images { get; set; } //base64
-			public bool? trim_stop { get; set; }
-			public bool? bypass_eos { get; set; }
-			public string[] banned_tokens { get; set; }
-			public Dictionary<int, float> logit_bias { get; set; } // token id => bias.
-			public string prompt { get; set; } // do not change
+			public object Clone()
+			{
+				var clone = new KoboldAPIConf
+				{
+					max_context_length = max_context_length,
+					max_length = max_length,
+					rep_pen = rep_pen,
+					rep_pen_range = rep_pen_range,
+					sampler_seed = sampler_seed,
+					stop_sequence = stop_sequence,
+					temperature = temperature,
+					tfs = tfs,
+					top_a = top_a,
+					top_k = top_k,
+					top_p = top_p,
+					min_p = min_p,
+					typical = typical,
+					dynatemp_range = dynatemp_range,
+					smoothing_factor = smoothing_factor,
+					dynatemp_exponent = dynatemp_exponent,
+					mirostat = mirostat,
+					mirostat_tau = mirostat_tau,
+					mirostat_eta = mirostat_eta,
+					genkey = genkey,
+					grammar = grammar,
+					images = images,
+					trim_stop = trim_stop,
+					bypass_eos = bypass_eos,
+					banned_tokens = banned_tokens,
+					logit_bias = logit_bias,
+					prompt = prompt
+				};
+				return clone;
+			}
 		}
 
 		public KoboldAPIConf conf = new();
