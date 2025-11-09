@@ -136,6 +136,7 @@ namespace SharperLLM.API
 				return new ResponseEx
 				{
 					content = jsonResponse["choices"][0]["message"]["content"]?.ToString() ?? string.Empty,
+					thinking = jsonResponse["choices"][0]["message"]["reasoning_content"]?.ToString(),
 					FinishReason = finishReason,
 					toolCallings = toolCalls,
 				};

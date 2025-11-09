@@ -10,6 +10,7 @@ namespace SharperLLM.API
 	public class ResponseEx
 	{
 		public required string content { get; set; }
+		public string thinking { get; set; } = null;
 		public List<ToolCall>? toolCallings { get; set; }
 		public required FinishReason FinishReason { get; set; }
 	}
