@@ -13,8 +13,8 @@ namespace SharperLLM.Util
 		public string Content { get; set; }// The content of the message
 		public string ImageBase64 { get; set; }
 
-		public string id;
-		public List<ToolCall> toolCalls;
+		public string id { get; set; }
+		public List<ToolCall> toolCalls { get; set; }
 
 		[Newtonsoft.Json.JsonConstructor]
 		public ChatMessage(string Content, string ImageBase64)
