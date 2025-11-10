@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SharperLLM.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,15 +13,8 @@ namespace SharperLLM.Util
 		public string Content { get; set; }// The content of the message
 		public string ImageBase64 { get; set; }
 
-		public static implicit operator ChatMessage(string content)
-		{
-			return new ChatMessage
-			(
-				content,
-				null
-			);
-		}
-
+		public string id;
+		public List<ToolCall> toolCalls;
 
 		[Newtonsoft.Json.JsonConstructor]
 		public ChatMessage(string Content, string ImageBase64)
@@ -29,6 +23,14 @@ namespace SharperLLM.Util
 			this.ImageBase64 = ImageBase64;
 		}
 
+		public static implicit operator ChatMessage(string content)
+		{
+			return new ChatMessage
+			(
+				content,
+				null
+			);
+		}
 		public static implicit operator string(ChatMessage message)
 		{
 			return message.Content;
