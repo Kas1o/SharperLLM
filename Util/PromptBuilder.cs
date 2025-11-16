@@ -11,7 +11,11 @@ public class PromptBuilder
 
 	public enum From
 	{
-		user, assistant, system, tool_call, tool_result
+		user,
+		assistant,
+		system,
+		tool_call, // 事实上已经弃用了，改用ToolCallChatMessage来集成进消息吧
+		tool_result // 记得搭配 ToolChatMessage
 	}
 	public string SysSeqPrefix = "";
 	public string System = "";
@@ -56,6 +60,7 @@ public class PromptBuilder
 		ToolResultSeqPrefix = template.ToolResultSeqPrefix;
 		ToolResultSeqSuffix = template.ToolResultSeqSuffix;
 		AvailableToolsFormatter = template.AvailableToolsFormatter;
+		AvailableTools = template.AvailableTools.Select(a => a).ToList();
 	}
 
 	/// <summary>

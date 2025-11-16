@@ -322,13 +322,13 @@ namespace SharperLLM.API
 			List<dynamic> dynamics = new();
 			foreach (var message in messages)
 			{
-				if (message.Item1 is ToolCallChatMessage tccm)
+				if (message.Item2 == PromptBuilder.From.tool_call)
 				{
 					dynamics.Add(new
 					{
 						role = "assistant",
 						content = "",
-						tool_calls = tccm.toolCalls.Select(x => new
+						tool_calls = message.Item1.toolCalls.Select(x => new
 						{
 							index = x.index,
 							id = x.id,
@@ -342,13 +342,13 @@ namespace SharperLLM.API
 					});
 				}
 				else
-				if (message.Item1 is ToolChatMessage toolChatMessage)
+				if (message.Item2 == PromptBuilder.From.tool_result)
 				{
 					dynamics.Add(new
 					{
 						role = "tool",
-						tool_call_id = toolChatMessage.id,
-						content = toolChatMessage.Content
+						tool_call_id = message.Item1.id,
+						content = message.Item1.Content
 					});
 				}
 				else
