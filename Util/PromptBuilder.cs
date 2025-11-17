@@ -48,7 +48,7 @@ public class PromptBuilder
 		ChatStart = template.ChatStart;
 		InputPrefix = template.InputPrefix;
 		InputSuffix = template.InputSuffix;
-		Messages = template.Messages.Select(a => a).ToArray();
+		Messages = template.Messages?.Select(a => a).ToArray();
 		FirstOutputPrefix = template.FirstOutputPrefix;
 		OutputPrefix = template.OutputPrefix;
 		OutputSuffix = template.OutputSuffix;
@@ -60,7 +60,7 @@ public class PromptBuilder
 		ToolResultSeqPrefix = template.ToolResultSeqPrefix;
 		ToolResultSeqSuffix = template.ToolResultSeqSuffix;
 		AvailableToolsFormatter = template.AvailableToolsFormatter;
-		AvailableTools = template.AvailableTools.Select(a => a).ToList();
+		AvailableTools = template.AvailableTools?.Select(a => a).ToList();
 	}
 
 	/// <summary>
