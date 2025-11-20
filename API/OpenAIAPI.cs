@@ -107,7 +107,7 @@ namespace SharperLLM.API
 							id = item["id"].ToString(),
 							name = item["function"]["name"].ToString(),
 							arguments = item["function"]["arguments"]?.ToString(),
-							index = item["index"].ToObject<int>()
+							index = item["index"]?.ToObject<int>() ?? 0
 						});
 					}
 				}
