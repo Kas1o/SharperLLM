@@ -216,7 +216,7 @@ namespace SharperLLM.API
 					{
 						content = delta?["content"]?.ToString() ?? "",
 						FinishReason = FinishReason.None, 
-						toolCallings = toolCalls.ToList()
+						toolCallings = null
 					};
 				}
 
