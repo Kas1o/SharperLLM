@@ -123,7 +123,7 @@ namespace SharperLLM.API
 			}
 		}
 
-		public async IAsyncEnumerable<string> GenerateTextStream(string prompt)
+		public async IAsyncEnumerable<string> GenerateTextStream(string prompt, CancellationToken cancellationToken)
 		{
 			conf.prompt = prompt;
 			var client = new HttpClient();
@@ -210,7 +210,7 @@ namespace SharperLLM.API
 			}
 		}
 
-		public IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
+		public IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
@@ -220,7 +220,7 @@ namespace SharperLLM.API
 			throw new NotImplementedException();
 		}
 
-		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb)
+		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}

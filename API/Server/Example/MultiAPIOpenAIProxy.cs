@@ -96,9 +96,10 @@ namespace SharperLLM.API.Server.Example
 								new PromptBuilder(selectedApi.promptBuilderTemplate)
 								{
 									Messages = data.pb.Messages
-								}.GeneratePromptWithLatestOuputPrefix()
+								}.GeneratePromptWithLatestOuputPrefix(),
+								default
 							)
-							: selectedApi.lLMAPI.GenerateChatReplyStream(data.pb);
+							: selectedApi.lLMAPI.GenerateChatReplyStream(data.pb, default);
 
 						await foreach (var chunk in stream)
 						{

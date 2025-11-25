@@ -21,6 +21,7 @@ namespace SharperLLM.API
 		Length,
 		ContentFilter,
 		FunctionCall,
+		None
 	}
 
 	public class ToolCall

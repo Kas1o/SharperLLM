@@ -30,7 +30,7 @@ namespace SharperLLM.API
             try
             {
                 var result = new StringBuilder();
-                await foreach (var item in GenerateTextStream(prompt))
+                await foreach (var item in GenerateTextStream(prompt, default))
                 {
                     result.Append(item);
                 }
@@ -48,7 +48,7 @@ namespace SharperLLM.API
                 }
             }
         }
-        public async IAsyncEnumerable<string> GenerateTextStream(string prompt)
+        public async IAsyncEnumerable<string> GenerateTextStream(string prompt, CancellationToken cancellationToken)
         {
             conf.prompt = prompt;
 
@@ -83,7 +83,7 @@ namespace SharperLLM.API
 
         }
 
-		IAsyncEnumerable<string> ILLMAPI.GenerateChatReplyStream(PromptBuilder promptBuilder)
+		IAsyncEnumerable<string> ILLMAPI.GenerateChatReplyStream(PromptBuilder promptBuilder, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
@@ -93,7 +93,7 @@ namespace SharperLLM.API
 			throw new NotImplementedException();
 		}
 
-		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb)
+		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}

@@ -147,9 +147,152 @@ namespace SharperLLM.API
 			}
 		}
 
-		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb)
+		public async IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			var targetURL = $"{url}/chat/completions";
+			var messages = BuildMessages(pb.Messages);
+			var requestBody = new
+			{
+				model,
+				messages,
+				temperature,
+				max_tokens,
+				tools = pb.AvailableTools != null ? BuildTools(pb.AvailableTools) : null,
+				stream = true
+			};
+
+			using var client = new HttpClient();
+			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+			var jsonContent = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+			using var request = new HttpRequestMessage(HttpMethod.Post, targetURL) { Content = content };
+			using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+			response.EnsureSuccessStatusCode();
+
+			using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+			using var reader = new StreamReader(responseStream, Encoding.UTF8);
+
+			var toolCalls = new List<ToolCall>();
+			string currentContent = string.Empty;
+
+			while (await reader.ReadLineAsync(cancellationToken) is string line)
+			{
+				if (string.IsNullOrWhiteSpace(line))
+					continue;
+
+				// Handle SSE data lines
+				var match = Regex.Match(line, @"^data: (.*)$");
+				if (!match.Success)
+					continue;
+
+				var json = match.Groups[1].Value;
+
+				// Check for [DONE] message
+				if (json == "[DONE]")
+					break;
+
+				JObject data;
+				try
+				{
+					data = JObject.Parse(json);
+				}
+				catch (JsonException)
+				{
+					continue;
+				}
+
+				if (data["choices"]?[0] == null)
+					continue;
+
+				var choice = data["choices"][0];
+				var delta = choice["delta"];
+
+				// Process delta content
+				if (delta?["content"] != null)
+				{
+					currentContent += delta["content"].ToString();
+					yield return new ResponseEx
+					{
+						content = currentContent,
+						FinishReason = FinishReason.None, 
+						toolCallings = toolCalls.ToList()
+					};
+				}
+
+				// Process tool calls
+				if (delta?["tool_calls"] != null)
+				{
+					var toolCallsArray = delta["tool_calls"] as JArray;
+					if (toolCallsArray != null)
+					{
+						foreach (var item in toolCallsArray)
+						{
+							int index = item["index"]?.ToObject<int>() ?? 0;
+							ToolCall existingCall = toolCalls.FirstOrDefault(t => t.index == index);
+
+							if (existingCall == null)
+							{
+								// New tool call
+								var newCall = new ToolCall
+								{
+									id = item["id"]?.ToString() ?? string.Empty,
+									name = item["function"]?["name"]?.ToString() ?? string.Empty,
+									arguments = item["function"]?["arguments"]?.ToString() ?? string.Empty,
+									index = index
+								};
+								toolCalls.Add(newCall);
+							}
+							else
+							{
+								// Update existing tool call
+								existingCall.id = item["id"]?.ToString() ?? existingCall.id;
+								existingCall.name = item["function"]?["name"]?.ToString() ?? existingCall.name;
+								if (item["function"]?["arguments"] != null)
+								{
+									existingCall.arguments = item["function"]["arguments"].ToString();
+								}
+							}
+						}
+
+						// Yield response with updated tool calls
+						yield return new ResponseEx
+						{
+							content = currentContent,
+							FinishReason = FinishReason.None,
+							toolCallings = toolCalls.ToList()
+						};
+					}
+				}
+
+				// Check finish reason
+				if (choice["finish_reason"] != null)
+				{
+					string finishReasonString = choice["finish_reason"].ToString();
+					var finishReason = finishReasonString switch
+					{
+						"stop" => FinishReason.Stop,
+						"length" => FinishReason.Length,
+						"content_filter" => FinishReason.ContentFilter,
+						"function_call" => FinishReason.FunctionCall,
+						"tool_calls" => FinishReason.FunctionCall,
+						_ => FinishReason.Stop
+					};
+
+					// Final response with finish reason
+					yield return new ResponseEx
+					{
+						content = currentContent,
+						FinishReason = finishReason,
+						toolCallings = toolCalls.ToList()
+					};
+
+					if (finishReasonString == "tool_calls" || finishReasonString == "stop")
+						break;
+				}
+			}
 		}
 
 		public async Task<string> GenerateChatReply(PromptBuilder promptBuilder)
@@ -183,7 +326,7 @@ namespace SharperLLM.API
 			}
 		}
 
-		public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder)
+		public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder, CancellationToken cancellationToken)
 		{
 			var targetURL = $"{url}/chat/completions";
 			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1.Content }).ToArray();
@@ -283,7 +426,7 @@ namespace SharperLLM.API
 			}
 		}
 
-		IAsyncEnumerable<string> ILLMAPI.GenerateTextStream(string prompt)
+		IAsyncEnumerable<string> ILLMAPI.GenerateTextStream(string prompt, CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
 		}
