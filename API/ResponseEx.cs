@@ -13,6 +13,26 @@ namespace SharperLLM.API
 		public string thinking { get; set; } = null;
 		public List<ToolCall>? toolCallings { get; set; }
 		public required FinishReason FinishReason { get; set; }
+
+		public static ResponseEx operator+(ResponseEx prev, ResponseEx next)
+		{
+			var combined = new ResponseEx
+			{
+				content = prev.content + next.content,
+				thinking = (prev.thinking ?? "") + (next.thinking ?? ""),
+				FinishReason = next.FinishReason,
+				toolCallings = new List<ToolCall>()
+			};
+			if (prev.toolCallings != null)
+			{
+				combined.toolCallings.AddRange(prev.toolCallings);
+			}
+			if (next.toolCallings != null)
+			{
+				combined.toolCallings.AddRange(next.toolCallings);
+			}
+			return combined;
+		}
 	}
 
 	public enum FinishReason

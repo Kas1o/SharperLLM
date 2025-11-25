@@ -176,7 +176,6 @@ namespace SharperLLM.API
 			using var reader = new StreamReader(responseStream, Encoding.UTF8);
 
 			var toolCalls = new List<ToolCall>();
-			string currentContent = string.Empty;
 
 			while (await reader.ReadLineAsync(cancellationToken) is string line)
 			{
@@ -213,10 +212,9 @@ namespace SharperLLM.API
 				// Process delta content
 				if (delta?["content"] != null)
 				{
-					currentContent += delta["content"].ToString();
 					yield return new ResponseEx
 					{
-						content = currentContent,
+						content = delta?["content"]?.ToString() ?? "",
 						FinishReason = FinishReason.None, 
 						toolCallings = toolCalls.ToList()
 					};
@@ -260,7 +258,7 @@ namespace SharperLLM.API
 						// Yield response with updated tool calls
 						yield return new ResponseEx
 						{
-							content = currentContent,
+							content = string.Empty,
 							FinishReason = FinishReason.None,
 							toolCallings = toolCalls.ToList()
 						};
@@ -278,13 +276,13 @@ namespace SharperLLM.API
 						"content_filter" => FinishReason.ContentFilter,
 						"function_call" => FinishReason.FunctionCall,
 						"tool_calls" => FinishReason.FunctionCall,
-						_ => FinishReason.Stop
+						_ => FinishReason.None
 					};
 
 					// Final response with finish reason
 					yield return new ResponseEx
 					{
-						content = currentContent,
+						content = string.Empty,
 						FinishReason = finishReason,
 						toolCallings = toolCalls.ToList()
 					};
