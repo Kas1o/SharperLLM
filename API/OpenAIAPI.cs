@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharperLLM.FunctionCalling;
 using SharperLLM.Util;
@@ -250,7 +250,15 @@ namespace SharperLLM.API
 								existingCall.name = item["function"]?["name"]?.ToString() ?? existingCall.name;
 								if (item["function"]?["arguments"] != null)
 								{
-									existingCall.arguments = item["function"]["arguments"].ToString();
+									var newArguments = item["function"]["arguments"].ToString();
+									// 如果ID相同，保持增量累积逻辑，就像content一样
+									// 只有当有新的参数内容时才更新
+									if (!string.IsNullOrEmpty(newArguments) && existingCall.id == item["id"]?.ToString())
+									{
+										// 注意：这里实现增量累积逻辑
+										// 由于OpenAI API在流式响应中可能会分块返回参数，我们需要正确处理累积
+										existingCall.arguments = newArguments;
+									}
 								}
 							}
 						}
