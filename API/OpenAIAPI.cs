@@ -251,8 +251,6 @@ namespace SharperLLM.API
 								if (item["function"]?["arguments"] != null)
 								{
 									var newArguments = item["function"]["arguments"].ToString();
-									// 直接更新参数，保持与content类似的增量处理逻辑
-									// 由于OpenAI API在流式响应中会返回完整的参数内容，我们需要直接替换
 									existingCall.arguments = newArguments;
 								}
 							}
@@ -287,7 +285,7 @@ namespace SharperLLM.API
 					{
 						content = string.Empty,
 						FinishReason = finishReason,
-						toolCallings = toolCalls.ToList()
+						toolCallings = null//toolCalls.ToList()
 					};
 
 					if (finishReasonString == "tool_calls" || finishReasonString == "stop")
