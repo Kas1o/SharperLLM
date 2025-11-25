@@ -175,7 +175,6 @@ namespace SharperLLM.API
 			using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 			using var reader = new StreamReader(responseStream, Encoding.UTF8);
 
-			var toolCalls = new List<ToolCall>();
 
 			while (await reader.ReadLineAsync(cancellationToken) is string line)
 			{
@@ -209,20 +208,16 @@ namespace SharperLLM.API
 				var choice = data["choices"][0];
 				var delta = choice["delta"];
 
-				// Process delta content
-				if (delta?["content"] != null)
-				{
-					yield return new ResponseEx
-					{
-						content = delta?["content"]?.ToString() ?? "",
-						FinishReason = FinishReason.None, 
-						toolCallings = null
-					};
-				}
+				// Initialize empty response
+				ResponseEx responseEx = new ResponseEx { content = "", FinishReason = FinishReason.None };
+
+				responseEx.content = delta?["content"]?.ToString() ?? "";
+
 
 				// Process tool calls
 				if (delta?["tool_calls"] != null)
 				{
+					var toolCalls = new List<ToolCall>();
 					var toolCallsArray = delta["tool_calls"] as JArray;
 					if (toolCallsArray != null)
 					{
@@ -231,66 +226,39 @@ namespace SharperLLM.API
 							int index = item["index"]?.ToObject<int>() ?? 0;
 							ToolCall existingCall = toolCalls.FirstOrDefault(t => t.index == index);
 
-							if (existingCall == null)
+							// New tool call
+							var newCall = new ToolCall
 							{
-								// New tool call
-								var newCall = new ToolCall
-								{
-									id = item["id"]?.ToString() ?? string.Empty,
-									name = item["function"]?["name"]?.ToString() ?? string.Empty,
-									arguments = item["function"]?["arguments"]?.ToString() ?? string.Empty,
-									index = index
-								};
-								toolCalls.Add(newCall);
-							}
-							else
-							{
-								// Update existing tool call
-								existingCall.id = item["id"]?.ToString() ?? existingCall.id;
-								existingCall.name = item["function"]?["name"]?.ToString() ?? existingCall.name;
-								if (item["function"]?["arguments"] != null)
-								{
-									var newArguments = item["function"]["arguments"].ToString();
-									existingCall.arguments = newArguments;
-								}
-							}
+								id = item["id"]?.ToString() ?? string.Empty,
+								name = item["function"]?["name"]?.ToString() ?? string.Empty,
+								arguments = item["function"]?["arguments"]?.ToString() ?? string.Empty,
+								index = index
+							};
+							toolCalls.Add(newCall);
 						}
-
-						// Yield response with updated tool calls
-						yield return new ResponseEx
-						{
-							content = string.Empty,
-							FinishReason = FinishReason.None,
-							toolCallings = toolCalls.ToList()
-						};
 					}
-				}
 
-				// Check finish reason
-				if (choice["finish_reason"] != null)
+					responseEx.toolCallings = toolCalls;
+				}
+				else
 				{
-					string finishReasonString = choice["finish_reason"].ToString();
-					var finishReason = finishReasonString switch
-					{
-						"stop" => FinishReason.Stop,
-						"length" => FinishReason.Length,
-						"content_filter" => FinishReason.ContentFilter,
-						"function_call" => FinishReason.FunctionCall,
-						"tool_calls" => FinishReason.FunctionCall,
-						_ => FinishReason.None
-					};
-
-					// Final response with finish reason
-					yield return new ResponseEx
-					{
-						content = string.Empty,
-						FinishReason = finishReason,
-						toolCallings = null//toolCalls.ToList()
-					};
-
-					if (finishReasonString == "tool_calls" || finishReasonString == "stop")
-						break;
+					responseEx.toolCallings = [];
 				}
+
+				// Process Finish Reason
+				string? finishReasonString = choice?["finish_reason"]?.ToString();
+				var finishReason = finishReasonString switch
+				{
+					"stop" => FinishReason.Stop,
+					"length" => FinishReason.Length,
+					"content_filter" => FinishReason.ContentFilter,
+					"function_call" => FinishReason.FunctionCall,
+					"tool_calls" => FinishReason.FunctionCall,
+					_ => FinishReason.None
+				};
+
+				// Final response 
+				yield return responseEx;
 			}
 		}
 
