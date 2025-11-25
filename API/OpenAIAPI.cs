@@ -251,14 +251,9 @@ namespace SharperLLM.API
 								if (item["function"]?["arguments"] != null)
 								{
 									var newArguments = item["function"]["arguments"].ToString();
-									// 如果ID相同，保持增量累积逻辑，就像content一样
-									// 只有当有新的参数内容时才更新
-									if (!string.IsNullOrEmpty(newArguments) && existingCall.id == item["id"]?.ToString())
-									{
-										// 注意：这里实现增量累积逻辑
-										// 由于OpenAI API在流式响应中可能会分块返回参数，我们需要正确处理累积
-										existingCall.arguments = newArguments;
-									}
+									// 直接更新参数，保持与content类似的增量处理逻辑
+									// 由于OpenAI API在流式响应中会返回完整的参数内容，我们需要直接替换
+									existingCall.arguments = newArguments;
 								}
 							}
 						}
