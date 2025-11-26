@@ -491,16 +491,17 @@ namespace SharperLLM.API
 					}
 					else
 					{
-						dynamics.Add(new
-						{
-							role = message.Item2 switch
+						if (!string.IsNullOrEmpty(message.Item1.Content))
+							dynamics.Add(new
 							{
-								PromptBuilder.From.system => "system",
-								PromptBuilder.From.user => "user",
-								PromptBuilder.From.assistant => "assistant",
-							},
-							content = message.Item1.Content
-						});
+								role = message.Item2 switch
+								{
+									PromptBuilder.From.system => "system",
+									PromptBuilder.From.user => "user",
+									PromptBuilder.From.assistant => "assistant",
+								},
+								content = message.Item1.Content
+							});
 					}
 				}
 			}
