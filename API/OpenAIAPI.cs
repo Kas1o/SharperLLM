@@ -256,6 +256,7 @@ namespace SharperLLM.API
 					"tool_calls" => FinishReason.FunctionCall,
 					_ => FinishReason.None
 				};
+				responseEx.FinishReason = finishReason;
 
 				// Final response 
 				yield return responseEx;
