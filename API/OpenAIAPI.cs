@@ -212,7 +212,7 @@ namespace SharperLLM.API
 				ResponseEx responseEx = new ResponseEx { content = "", FinishReason = FinishReason.None };
 
 				responseEx.content = delta?["content"]?.ToString() ?? "";
-
+				responseEx.thinking = delta?["reasoning_content"]?.ToString() ?? "";
 
 				// Process tool calls
 				if (delta?["tool_calls"] != null)
