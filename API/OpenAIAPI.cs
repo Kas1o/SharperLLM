@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharperLLM.FunctionCalling;
 using SharperLLM.Util;
+using System.Dynamic;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -18,7 +19,7 @@ namespace SharperLLM.API
 		public string model = _model;
 		public float temperature = _temperature;
 		public int max_tokens = _max_tokens;
-
+		public bool AddThinkingToRequest { get; set; } = true;
 		#region basic api
 		public async Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
 		{
@@ -135,10 +136,13 @@ namespace SharperLLM.API
 
 				return new ResponseEx
 				{
-					content = jsonResponse["choices"][0]["message"]["content"]?.ToString() ?? string.Empty,
-					thinking = jsonResponse["choices"][0]["message"]["reasoning_content"]?.ToString(),
+					Body = new ChatMessage
+					{
+						Content = jsonResponse["choices"][0]["message"]["content"]?.ToString() ?? string.Empty,
+						thinking = jsonResponse["choices"][0]["message"]["reasoning_content"]?.ToString(),
+						toolCalls = toolCalls,
+					},
 					FinishReason = finishReason,
-					toolCallings = toolCalls,
 				};
 			}
 			else
@@ -209,10 +213,19 @@ namespace SharperLLM.API
 				var delta = choice["delta"];
 
 				// Initialize empty response
-				ResponseEx responseEx = new ResponseEx { content = "", FinishReason = FinishReason.None };
+				ResponseEx responseEx = new ResponseEx 
+				{
+					Body = new ChatMessage
+					{
+						Content = "",
+						thinking = null,
+						toolCalls = new List<ToolCall>()
+					},
+					FinishReason = FinishReason.None 
+				};
 
-				responseEx.content = delta?["content"]?.ToString() ?? "";
-				responseEx.thinking = delta?["reasoning_content"]?.ToString() ?? "";
+				responseEx.Body.Content = delta?["content"]?.ToString() ?? "";
+				responseEx.Body.thinking = delta?["reasoning_content"]?.ToString() ?? "";
 
 				// Process tool calls
 				if (delta?["tool_calls"] != null)
@@ -238,11 +251,11 @@ namespace SharperLLM.API
 						}
 					}
 
-					responseEx.toolCallings = toolCalls;
+					responseEx.Body.toolCalls = toolCalls;
 				}
 				else
 				{
-					responseEx.toolCallings = [];
+					responseEx.Body.toolCalls = [];
 				}
 
 				// Process Finish Reason
@@ -430,83 +443,67 @@ namespace SharperLLM.API
 		#endregion
 		List<dynamic> BuildMessages(IEnumerable<(ChatMessage, PromptBuilder.From)> messages)
 		{
-			List<dynamic> dynamics = new();
-			foreach (var message in messages)
+			var dynamics = new List<dynamic>();
+
+			foreach (var (message, from) in messages)
 			{
-				if (message.Item2 == PromptBuilder.From.tool_call)
+				dynamic msg = new ExpandoObject();
+
+				if (message.toolCalls != null && from == PromptBuilder.From.assistant)
 				{
-					dynamics.Add(new
+					msg.tool_calls = message.toolCalls?.Select(x => new
 					{
-						role = "assistant",
-						content = "",
-						tool_calls = message.Item1.toolCalls.Select(x => new
+						index = x.index,
+						id = x.id,
+						type = "function",
+						function = new
 						{
-							index = x.index,
-							id = x.id,
-							type = "function",
-							function = new
-							{
-								name = x.name,
-								arguments = x.arguments
-							}
-						})
-					});
+							name = x.name,
+							arguments = x.arguments
+						}
+					}).ToList();
 				}
-				else
-				if (message.Item2 == PromptBuilder.From.tool_result)
+
+				if (from == PromptBuilder.From.tool_result)
 				{
-					dynamics.Add(new
-					{
-						role = "tool",
-						tool_call_id = message.Item1.id,
-						content = message.Item1.Content
-					});
+					msg.role = "tool";
+					msg.tool_call_id = message.id;
+					msg.content = message.Content;
 				}
 				else
 				{
-					if (message.Item1.ImageBase64 != null)
+					// 设置 role
+					msg.role = from switch
 					{
-						dynamics.Add(new
+						PromptBuilder.From.system => "system",
+						PromptBuilder.From.user => "user",
+						PromptBuilder.From.assistant => "assistant",
+						_ => "user" // fallback
+					};
+
+					if (!string.IsNullOrEmpty(message.ImageBase64))
+					{
+						var inputs = new List<dynamic>
 						{
-							role = message.Item2 switch
-							{
-								PromptBuilder.From.system => "system",
-								PromptBuilder.From.user => "user",
-								PromptBuilder.From.assistant => "assistant",
-							},
-							input = new dynamic[]
-							{
-							new
-							{
-								type = "input_text",
-								text = message.Item1.Content
-							},
-							new
-							{
-								type = "input_image",
-								image_url = $"data:image/jpeg;base64,{message.Item1.ImageBase64}"
-							}
-							}
-						});
+							new { type = "input_text", text = message.Content },
+							new { type = "input_image", image_url = $"data:image/jpeg;base64,{message.ImageBase64}" }
+						};
+						((IDictionary<string, object>)msg).Add("input", inputs.ToArray());
 					}
 					else
 					{
-						if (!string.IsNullOrEmpty(message.Item1.Content))
-							dynamics.Add(new
-							{
-								role = message.Item2 switch
-								{
-									PromptBuilder.From.system => "system",
-									PromptBuilder.From.user => "user",
-									PromptBuilder.From.assistant => "assistant",
-								},
-								content = message.Item1.Content
-							});
+						((IDictionary<string, object>)msg).Add("content", message.Content);
+						if (AddThinkingToRequest && message.thinking != null) 
+							((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
 					}
 				}
+
+				dynamics.Add(msg);
 			}
+
 			return dynamics;
 		}
+
 		List<OTool> BuildTools(IEnumerable<Tool> tools)
 		{
 			List<OTool> otools = tools.Select(

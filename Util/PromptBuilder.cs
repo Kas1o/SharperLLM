@@ -14,7 +14,7 @@ public class PromptBuilder
 		user,
 		assistant,
 		system,
-		tool_call, // 事实上已经弃用了，改用ToolCallChatMessage来集成进消息吧
+		//tool_call, // 已经弃用了，改用ChatMessage来集成进消息吧
 		tool_result // 记得搭配 ToolChatMessage
 	}
 	public string SysSeqPrefix = "";
@@ -129,11 +129,6 @@ public class PromptBuilder
 						.Append(message)
 						.Append(SysSeqSuffix);
 					break;
-				case From.tool_call:
-					resultBuilder.Append(ToolsCallPrefix).Append(Environment.NewLine)
-						.Append(message)
-						.Append(ToolsCallPrefix);
-					break;
 				case From.tool_result:
 					resultBuilder.Append(ToolResultSeqPrefix).Append(Environment.NewLine)
 						.Append(message)
@@ -207,11 +202,6 @@ public class PromptBuilder
 					resultBuilder.Append(SysSeqPrefix).Append(Environment.NewLine)
 						.Append(message)
 						.Append(SysSeqSuffix);
-					break;
-				case From.tool_call:
-					resultBuilder.Append(ToolsCallPrefix).Append(Environment.NewLine)
-						.Append(message)
-						.Append(ToolsCallPrefix);
 					break;
 				case From.tool_result:
 					resultBuilder.Append(ToolResultSeqPrefix).Append(Environment.NewLine)

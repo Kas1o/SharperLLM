@@ -1,4 +1,5 @@
 ﻿﻿using SharperLLM.FunctionCalling;
+using SharperLLM.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,28 +10,30 @@ namespace SharperLLM.API
 {
 	public class ResponseEx
 	{
-		public required string content { get; set; }
-		public string thinking { get; set; } = null;
-		public List<ToolCall>? toolCallings { get; set; }
+		public required ChatMessage Body { get; set; }
 		public required FinishReason FinishReason { get; set; }
 
 		public static ResponseEx operator+(ResponseEx prev, ResponseEx next)
 		{
 			var combined = new ResponseEx
 			{
-				content = prev.content + next.content,
-				thinking = (prev.thinking ?? "") + (next.thinking ?? ""),
+				Body = new ChatMessage
+				{
+					Content = prev.Body.Content + next.Body.Content,
+					thinking = (prev.Body.thinking != null || next.Body.thinking != null) ? (prev.Body.thinking ?? "") + (next.Body.thinking ?? "") : null, 
+					id = next.Body.id,// 以next的id为准
+					toolCalls = new List<ToolCall>()
+				},
 				FinishReason = next.FinishReason,
-				toolCallings = new List<ToolCall>()
 			};
 			
 			// 创建一个字典来存储按index分组的工具调用
 			var toolCallDict = new Dictionary<int, ToolCall>();
 			
 			// 先添加prev中的工具调用
-			if (prev.toolCallings != null)
+			if (prev.Body.toolCalls != null)
 			{
-				foreach (var toolCall in prev.toolCallings)
+				foreach (var toolCall in prev.Body.toolCalls)
 				{
 					toolCallDict[toolCall.index] = new ToolCall
 					{
@@ -43,9 +46,9 @@ namespace SharperLLM.API
 			}
 			
 			// 处理next中的工具调用，同index的进行内容累积
-			if (next.toolCallings != null)
+			if (next.Body.toolCalls != null)
 			{
-				foreach (var toolCall in next.toolCallings)
+				foreach (var toolCall in next.Body.toolCalls)
 				{
 					if (toolCallDict.TryGetValue(toolCall.index, out var existingToolCall))
 					{
@@ -67,7 +70,7 @@ namespace SharperLLM.API
 			}
 			
 			// 将字典中的工具调用按index排序后添加到结果中
-			combined.toolCallings.AddRange(toolCallDict.Values.OrderBy(tc => tc.index));
+			combined.Body.toolCalls.AddRange(toolCallDict.Values.OrderBy(tc => tc.index));
 			
 			return combined;
 		}

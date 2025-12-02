@@ -136,7 +136,6 @@ namespace SharperLLM.API.Server
 				["user"] = PromptBuilder.From.user,
 				["human"] = PromptBuilder.From.user,
 				["gpt"] = PromptBuilder.From.assistant,
-				["tool_call"] = PromptBuilder.From.tool_call,
 				["tool_result"] = PromptBuilder.From.tool_result,
 				["assistant"] = PromptBuilder.From.assistant
 			};
@@ -150,7 +149,7 @@ namespace SharperLLM.API.Server
 					throw new ArgumentException($"Unknown role: {role}");
 
 				// 直接给 Messages 数组赋值
-				pb.Messages = pb.Messages.Append((new ChatMessage(content, null), from)).ToArray();
+				pb.Messages = pb.Messages.Append((new ChatMessage { Content = content }, from)).ToArray();
 			}
 
 			if (stream)

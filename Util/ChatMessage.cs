@@ -8,28 +8,18 @@ using System.Threading.Tasks;
 
 namespace SharperLLM.Util
 {
-	public class ChatMessage
+	public class ChatMessage : ICloneable
 	{
-		public string Content { get; set; }// The content of the message
-		public string ImageBase64 { get; set; }
+		public required string Content { get; set; }// The content of the message
+		public string? ImageBase64 { get; set; } = null;
 
-		public string id { get; set; }
-		public List<ToolCall> toolCalls { get; set; }
-
-		[Newtonsoft.Json.JsonConstructor]
-		public ChatMessage(string Content, string ImageBase64)
-		{
-			this.Content = Content;
-			this.ImageBase64 = ImageBase64;
-		}
+		public string? thinking { get; set; } = null;
+		public string? id { get; set; } = null;
+		public List<ToolCall>? toolCalls { get; set; } = null;
 
 		public static implicit operator ChatMessage(string content)
 		{
-			return new ChatMessage
-			(
-				content,
-				null
-			);
+			return new ChatMessage { Content = content };
 		}
 		public static implicit operator string(ChatMessage message)
 		{
@@ -39,6 +29,12 @@ namespace SharperLLM.Util
 		public override string ToString()
 		{
 			return ((ImageBase64 != null) ? "[image]" : "" )+ $"{Content}";
+		}
+
+		public object Clone()
+		{
+			var cloned = (ChatMessage)this.MemberwiseClone();
+			return cloned;
 		}
 	}
 }
