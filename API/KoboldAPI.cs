@@ -136,9 +136,11 @@ namespace SharperLLM.API
 				Encoding.UTF8, "application/json")
 			};
 
-			using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+			// 将 cancellationToken 传递给 SendAsync 方法
+			using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-			await using var stream = await response.Content.ReadAsStreamAsync();
+			// 将 cancellationToken 传递给 ReadAsStreamAsync 方法
+			await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
 			_ = response.Content.Headers.TryGetValues("Content-Type", out var contentTypes);
 
@@ -148,7 +150,11 @@ namespace SharperLLM.API
 
 				while (!reader.EndOfStream)
 				{
-					var line = await reader.ReadLineAsync();
+					// 检查取消令牌是否已取消
+					cancellationToken.ThrowIfCancellationRequested();
+
+					// 将 cancellationToken 传递给 ReadLineAsync 方法
+					var line = await reader.ReadLineAsync(cancellationToken);
 
 					if (line.StartsWith("data:"))
 					{
