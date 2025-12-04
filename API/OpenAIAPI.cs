@@ -21,7 +21,7 @@ namespace SharperLLM.API
 		public float temperature = _temperature;
 		public int max_tokens = _max_tokens;
 		public bool AddThinkingToRequest { get; set; } = true;
-		#region basic api
+		#region Basic API
 		public async Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
 		{
 			var targetURL = $"{url}/chat/completions";
@@ -412,6 +412,32 @@ namespace SharperLLM.API
 		#endregion
 
 		#region extra api
+
+		public async Task<List<float>> GetEmbedding(string input)
+		{
+			var targetURL = $"{url}/embeddings";
+			var requestBody = new
+			{
+				model,
+				input
+			};
+			using var client = new HttpClient();
+			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+			var jsonContent = JsonConvert.SerializeObject(requestBody);
+			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+			var response = await client.PostAsync(targetURL, content);
+			var responseString = await response.Content.ReadAsStringAsync();
+			if (response.IsSuccessStatusCode)
+			{
+				JObject jsonResponse = JObject.Parse(responseString);
+				var embedding = jsonResponse?["data"]?[0]?["embedding"]?.ToObject<List<float>>() ?? throw new InvalidDataException("Failed to get embedding from api, invalid return structure.");
+				return embedding;
+			}
+			else
+			{
+				throw new Exception($"Error calling OpenAI API: {responseString}");
+			}
+		}
 
 		public async Task<List<string>> GetModelNameList()
 		{
