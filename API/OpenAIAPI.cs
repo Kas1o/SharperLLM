@@ -444,12 +444,14 @@ namespace SharperLLM.API
 		List<dynamic> BuildMessages(IEnumerable<(ChatMessage, PromptBuilder.From)> messages)
 		{
 			var dynamics = new List<dynamic>();
+			var messagesList = messages.ToList();
 
-			foreach (var (message, from) in messages)
+			for (int i = 0; i < messagesList.Count; i++)
 			{
+				var (message, from) = messagesList[i];
 				dynamic msg = new ExpandoObject();
 
-				if (message.toolCalls != null && from == PromptBuilder.From.assistant)
+				if (message.toolCalls != null && message.toolCalls.Count > 0 && from == PromptBuilder.From.assistant)
 				{
 					msg.tool_calls = message.toolCalls?.Select(x => new
 					{
@@ -493,8 +495,26 @@ namespace SharperLLM.API
 					else
 					{
 						((IDictionary<string, object>)msg).Add("content", message.Content);
-						if (AddThinkingToRequest && message.thinking != null) 
-							((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
+						
+						// 只有当 thinking 段后面不存在 role 为 user 的消息时才附加 thinking 段
+						if (AddThinkingToRequest && message.thinking != null)
+						{
+							bool hasSubsequentUserMessage = false;
+							for (int j = i + 1; j < messagesList.Count; j++)
+							{
+								var (_, nextFrom) = messagesList[j];
+								if (nextFrom == PromptBuilder.From.user)
+								{
+									hasSubsequentUserMessage = true;
+									break;
+								}
+							}
+							
+							if (!hasSubsequentUserMessage)
+							{
+								((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
+							}
+						}
 					}
 				}
 
