@@ -4,6 +4,7 @@ using SharperLLM.FunctionCalling;
 using SharperLLM.Util;
 using System.Dynamic;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -98,48 +99,46 @@ namespace SharperLLM.API
 
 				// Extract tool_calls and finish_reason
 				var toolCalls = new List<ToolCall>();
-				var isToolsArray = jsonResponse["choices"]?[0]?["message"]?["tool_calls"] is JArray ;
-				if (isToolsArray)
+				if (jsonResponse["choices"]?[0]?["message"]?["tool_calls"] is JArray arr)
 				{
-					foreach (var item in jsonResponse["choices"]?[0]?["message"]?["tool_calls"])
+					foreach (var item in arr)
 					{
 						toolCalls.Add(new ToolCall
 						{
-							id = item["id"].ToString(),
-							name = item["function"]["name"].ToString(),
-							arguments = item["function"]["arguments"]?.ToString(),
+							id = item["id"]?.ToString() ?? throw new InvalidDataException($"API returns tool call without id. \n{responseString}"),
+							name = item["function"]?["name"]?.ToString() ?? throw new InvalidDataException($"API returns tool call without id. \n{responseString}"),
+							arguments = item["function"]?["arguments"]?.ToString() ?? throw new InvalidDataException($"API returns tool call without argument \n{responseString}"),
 							index = item["index"]?.ToObject<int>() ?? 0
 						});
 					}
 				}
-				else
+				// 有些 API 返回的 tool_calls 不是 Array，而是单独的 Tool Call。
+				else if (jsonResponse["choices"]?[0]?["message"]?["tool_calls"] is JObject obj)
 				{
-					// 再判断是否存在tool_calls
-					if (jsonResponse["choices"]?[0]?["message"]?	["tool_calls"] != null)
-						toolCalls.Add(new ToolCall
-						{
-							id = jsonResponse["choices"][0]["message"]["tool_calls"]["id"].ToString(),
-							name = jsonResponse["choices"][0]["message"]["tool_calls"]["function"]["name"].ToString(),
-							arguments = jsonResponse["choices"][0]["message"]["tool_calls"]["function"]["arguments"]?.ToString()
-						});
+					toolCalls.Add(new ToolCall
+					{
+						id = obj["id"]?.ToString() ?? throw new InvalidDataException($"API returns tool call without id. \n{responseString}"),
+						name = obj["function"]?["name"]?.ToString() ?? throw new InvalidDataException($"API returns tool call without id. \n{responseString}"),
+						arguments = obj["function"]?["arguments"]?.ToString() ?? throw new InvalidDataException($"API returns tool call without argument \n{responseString}")
+					});
 				}
 
-				var finishReason = jsonResponse["choices"][0]["finish_reason"].ToObject<string>() switch
+				var finishReason = jsonResponse["choices"]?[0]?["finish_reason"]?.ToObject<string>() switch
 				{
 					"stop" => FinishReason.Stop,
 					"length" => FinishReason.Length,
 					"content_filter" => FinishReason.ContentFilter,
 					"function_call" => FinishReason.FunctionCall,
 					"tool_calls" => FinishReason.FunctionCall,
-					_ => throw new Exception($"Unknown finish reason: {jsonResponse["choices"][0]["finish_reason"]}"),
+					_ => throw new Exception($"Unknown finish reason: {jsonResponse["choices"]?[0]?["finish_reason"]}"),
 				};
 
 				return new ResponseEx
 				{
 					Body = new ChatMessage
 					{
-						Content = jsonResponse["choices"][0]["message"]["content"]?.ToString() ?? string.Empty,
-						thinking = jsonResponse["choices"][0]["message"]["reasoning_content"]?.ToString(),
+						Content = jsonResponse["choices"]?[0]?["message"]?["content"]?.ToString() ?? string.Empty,
+						thinking = jsonResponse["choices"]?[0]?["message"]?["reasoning_content"]?.ToString(),
 						toolCalls = toolCalls,
 					},
 					FinishReason = finishReason,
@@ -150,8 +149,8 @@ namespace SharperLLM.API
 				throw new Exception($"Error calling OpenAI API: {responseString}");
 			}
 		}
-
-		public async IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, CancellationToken cancellationToken)
+		
+		public async IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, [EnumeratorCancellation] CancellationToken cancellationToken)
 		{
 			var targetURL = $"{url}/chat/completions";
 			var messages = BuildMessages(pb.Messages);
@@ -209,8 +208,8 @@ namespace SharperLLM.API
 				if (data["choices"]?[0] == null)
 					continue;
 
-				var choice = data["choices"][0];
-				var delta = choice["delta"];
+				var choice = data["choices"]?[0] ?? throw new InvalidDataException("API Stream block Contains no 'choices' field.");
+				var delta = choice?["delta"] ?? throw new InvalidDataException("API Stream choice block Contains no 'delta' field.");
 
 				// Initialize empty response
 				ResponseEx responseEx = new ResponseEx 
@@ -231,13 +230,11 @@ namespace SharperLLM.API
 				if (delta?["tool_calls"] != null)
 				{
 					var toolCalls = new List<ToolCall>();
-					var toolCallsArray = delta["tool_calls"] as JArray;
-					if (toolCallsArray != null)
+					if (delta["tool_calls"] is JArray toolCallsArray)
 					{
 						foreach (var item in toolCallsArray)
 						{
 							int index = item["index"]?.ToObject<int>() ?? 0;
-							ToolCall existingCall = toolCalls.FirstOrDefault(t => t.index == index);
 
 							// New tool call
 							var newCall = new ToolCall
@@ -297,8 +294,8 @@ namespace SharperLLM.API
 				var responseString = await response.Content.ReadAsStringAsync();
 				if (response.IsSuccessStatusCode)
 				{
-					JObject jsonResponse = JObject.Parse(responseString);
-					return jsonResponse["choices"][0]["message"]["content"].ToString();
+					JObject jsonResponse = JObject.Parse(responseString) ?? throw new InvalidDataException("API returns invalid JSON Object");
+					return jsonResponse?["choices"]?[0]?["message"]?["content"]?.ToString() ?? throw new InvalidDataException("API return JSON Object contains no choices[0].message.content field."); 
 				}
 				else
 				{
@@ -307,7 +304,7 @@ namespace SharperLLM.API
 			}
 		}
 
-		public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder, CancellationToken cancellationToken)
+		public async IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder, [EnumeratorCancellation] CancellationToken cancellationToken)
 		{
 			var targetURL = $"{url}/chat/completions";
 			var messages = promptBuilder.Messages.Select(m => new { role = m.Item2.ToString(), content = m.Item1.Content }).ToArray();
@@ -398,8 +395,8 @@ namespace SharperLLM.API
 
 			if (response.IsSuccessStatusCode)
 			{
-				JObject jsonResponse = JObject.Parse(responseString);
-				return jsonResponse["choices"][0]["text"].ToString();
+				JObject jsonResponse = JObject.Parse(responseString) ?? throw new InvalidDataException("API returns invalid JSON Object");
+				return jsonResponse?["choices"]?[0]?["text"]?.ToString() ?? throw new InvalidDataException("API return JSON Object contains no choices[0].text field.");
 			}
 			else
 			{
@@ -426,8 +423,8 @@ namespace SharperLLM.API
 			if (response.IsSuccessStatusCode)
 			{
 				JObject jsonResponse = JObject.Parse(responseString);
-				var modelNames = jsonResponse["data"].Select(x => x["id"].ToString()).ToList();
-				return modelNames;
+				var modelNames = jsonResponse?["data"]?.Select(x => x?["id"]?.ToString()).ToList() ?? throw new InvalidDataException("Failed to get models from api, invalid return structure.");
+				return modelNames!;
 			}
 			else
 			{
@@ -537,7 +534,7 @@ namespace SharperLLM.API
 						parameters = new()
 						{
 							type = "object",
-							properties = x.parameters.ToDictionary(
+							properties = x.parameters!.ToDictionary(
 								x => x.parameter.name,
 								x => new OToolFunctionParameterProperty
 								{
@@ -546,7 +543,7 @@ namespace SharperLLM.API
 									@enum = x.parameter.@enum
 								}
 							),
-							required = x.parameters.Where(x => x.required).Select(x => x.parameter.name).ToList()
+							required = x.parameters!.Where(x => x.required).Select(x => x.parameter.name).ToList()
 						}
 					}
 				}
