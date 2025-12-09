@@ -270,6 +270,11 @@ namespace SharperLLM.API
 
 				// Final response 
 				yield return responseEx;
+
+				if(responseEx.FinishReason == FinishReason.FunctionCall)
+				{
+					break;
+				}
 			}
 		}
 
