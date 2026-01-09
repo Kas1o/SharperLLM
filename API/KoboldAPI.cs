@@ -144,6 +144,8 @@ namespace SharperLLM.API
 
 			_ = response.Content.Headers.TryGetValues("Content-Type", out var contentTypes);
 
+			response.EnsureSuccessStatusCode();
+
 			if (contentTypes.Any(x => x.StartsWith("text/event-stream")))
 			{
 				using var reader = new StreamReader(stream);
