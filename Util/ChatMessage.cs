@@ -17,6 +17,11 @@ namespace SharperLLM.Util
 		public string? id { get; set; } = null;
 		public List<ToolCall>? toolCalls { get; set; } = null;
 
+		/// <summary>
+		/// 消息级别的自定义参数，会被合并到请求体的 message 对象中
+		/// </summary>
+		public Dictionary<string, object>? CustomProperties { get; set; } = null;
+
 		public static implicit operator ChatMessage(string content)
 		{
 			return new ChatMessage { Content = content };

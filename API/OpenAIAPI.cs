@@ -21,20 +21,38 @@ namespace SharperLLM.API
 		public float temperature = _temperature;
 		public int max_tokens = _max_tokens;
 		public bool AddThinkingToRequest { get; set; } = true;
+
+		/// <summary>
+		/// 请求体根级别的自定义参数，会被合并到请求体根对象中
+		/// </summary>
+		public Dictionary<string, object>? CustomRequestProperties { get; set; } = null;
 		#region Basic API
 		public async Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
 		{
 			var targetURL = $"{url}/chat/completions";
 			var messages = BuildMessages(pb.Messages);
-			var requestBody = new
+			var requestBody = new JObject
 			{
-				model,
-				messages,
-				temperature,
-				max_tokens,
-				tools = pb.AvailableTools != null? BuildTools(pb.AvailableTools): null,
-				stream = false
+				["model"] = model,
+				["messages"] = JArray.FromObject(messages),
+				["temperature"] = temperature,
+				["max_tokens"] = max_tokens,
+				["stream"] = false
 			};
+
+			if (pb.AvailableTools != null)
+			{
+				requestBody["tools"] = JArray.FromObject(BuildTools(pb.AvailableTools));
+			}
+
+			// 合并根级别自定义参数
+			if (CustomRequestProperties != null)
+			{
+				foreach (var prop in CustomRequestProperties)
+				{
+					requestBody[prop.Key] = JToken.FromObject(prop.Value);
+				}
+			}
 
 			using var client = new HttpClient();
 			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
@@ -154,15 +172,28 @@ namespace SharperLLM.API
 		{
 			var targetURL = $"{url}/chat/completions";
 			var messages = BuildMessages(pb.Messages);
-			var requestBody = new
+			var requestBody = new JObject
 			{
-				model,
-				messages,
-				temperature,
-				max_tokens,
-				tools = pb.AvailableTools != null ? BuildTools(pb.AvailableTools) : null,
-				stream = true
+				["model"] = model,
+				["messages"] = JArray.FromObject(messages),
+				["temperature"] = temperature,
+				["max_tokens"] = max_tokens,
+				["stream"] = true
 			};
+
+			if (pb.AvailableTools != null)
+			{
+				requestBody["tools"] = JArray.FromObject(BuildTools(pb.AvailableTools));
+			}
+
+			// 合并根级别自定义参数
+			if (CustomRequestProperties != null)
+			{
+				foreach (var prop in CustomRequestProperties)
+				{
+					requestBody[prop.Key] = JToken.FromObject(prop.Value);
+				}
+			}
 
 			using var client = new HttpClient();
 			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
@@ -523,7 +554,7 @@ namespace SharperLLM.API
 					else
 					{
 						((IDictionary<string, object>)msg).Add("content", message.Content);
-						
+
 						// 只有当 thinking 段后面不存在 role 为 user 的消息时才附加 thinking 段
 						if (AddThinkingToRequest && message.thinking != null)
 						{
@@ -537,11 +568,20 @@ namespace SharperLLM.API
 									break;
 								}
 							}
-							
+
 							if (!hasSubsequentUserMessage)
 							{
 								((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
 							}
+						}
+					}
+
+					// 合并消息级别的自定义参数
+					if (message.CustomProperties != null)
+					{
+						foreach (var prop in message.CustomProperties)
+						{
+							((IDictionary<string, object>)msg)[prop.Key] = prop.Value;
 						}
 					}
 				}
