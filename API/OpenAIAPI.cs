@@ -13,13 +13,14 @@ namespace SharperLLM.API
 	/// <summary>
 	/// example url: "http://api.openai.com/v1"
 	/// </summary>
-	public class OpenAIAPI(string _url, string _apiKey, string _model, float _temperature = 0.7f, int _max_tokens = 8192) : ILLMAPI
+	public class OpenAIAPI(string _url, string _apiKey, string _model, float _temperature = 0.7f, int _max_tokens = 8192, bool _as_is = false) : ILLMAPI
 	{
 		public string url = _url;
 		public string apiKey = _apiKey;
 		public string model = _model;
 		public float temperature = _temperature;
 		public int max_tokens = _max_tokens;
+		public bool as_is = _as_is;
 		public bool AddThinkingToRequest { get; set; } = true;
 
 		/// <summary>
@@ -510,7 +511,8 @@ namespace SharperLLM.API
 				var (message, from) = messagesList[i];
 				dynamic msg = new ExpandoObject();
 
-				if (message.toolCalls != null && message.toolCalls.Count > 0 && from == PromptBuilder.From.assistant)
+				// as is 模式下不清理可能为错误的 toolCalls
+				if (message.toolCalls != null && ((message.toolCalls.Count > 0 && from == PromptBuilder.From.assistant)| as_is ))
 				{
 					msg.tool_calls = message.toolCalls?.Select(x => new
 					{
@@ -539,7 +541,7 @@ namespace SharperLLM.API
 						PromptBuilder.From.system => "system",
 						PromptBuilder.From.user => "user",
 						PromptBuilder.From.assistant => "assistant",
-						_ => "user" // fallback
+						var unexpected => as_is? unexpected.ToString() : "user" // fallback
 					};
 
 					if (!string.IsNullOrEmpty(message.ImageBase64))
@@ -559,6 +561,7 @@ namespace SharperLLM.API
 						if (AddThinkingToRequest && message.thinking != null)
 						{
 							bool hasSubsequentUserMessage = false;
+							if (! as_is) // as is 模式下不进行搜索，直接附加
 							for (int j = i + 1; j < messagesList.Count; j++)
 							{
 								var (_, nextFrom) = messagesList[j];
