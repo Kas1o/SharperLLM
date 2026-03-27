@@ -237,7 +237,7 @@ namespace SharperLLM.API
 					continue;
 				}
 
-				if (data["choices"]?[0] == null)
+				if (data["choices"]?.FirstOrDefault() == null)
 					continue;
 
 				var choice = data["choices"]?[0] ?? throw new InvalidDataException("API Stream block Contains no 'choices' field.");
