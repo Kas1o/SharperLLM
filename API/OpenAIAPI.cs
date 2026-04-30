@@ -43,7 +43,11 @@ namespace SharperLLM.API
 
 			if (pb.AvailableTools != null)
 			{
-				requestBody["tools"] = JArray.FromObject(BuildTools(pb.AvailableTools));
+				var jsonSerializer = new JsonSerializer
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				};
+				requestBody["tools"] = JArray.FromObject(BuildTools(pb.AvailableTools), jsonSerializer);
 			}
 
 			// 合并根级别自定义参数
