@@ -184,7 +184,11 @@ namespace SharperLLM.API
 
 			if (pb.AvailableTools != null)
 			{
-				requestBody["tools"] = JArray.FromObject(BuildTools(pb.AvailableTools));
+				var jsonSerializer = new JsonSerializer
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				};
+				requestBody["tools"] = JArray.FromObject(BuildTools(pb.AvailableTools), jsonSerializer);
 			}
 
 			// 合并根级别自定义参数
@@ -201,11 +205,18 @@ namespace SharperLLM.API
 			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 
 			var jsonContent = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+#if DEBUG
+			var DEBUG_humanJsonContent = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented });
+#endif
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
 			using var request = new HttpRequestMessage(HttpMethod.Post, targetURL) { Content = content };
 			using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-			response.EnsureSuccessStatusCode();
+			if (!response.IsSuccessStatusCode)
+			{
+				var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+				throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+			}
 
 			using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 			using var reader = new StreamReader(responseStream, Encoding.UTF8);
