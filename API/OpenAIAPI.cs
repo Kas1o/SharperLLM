@@ -623,7 +623,7 @@ namespace SharperLLM.API
 						parameters = new()
 						{
 							type = "object",
-							properties = x.parameters!.ToDictionary(
+							properties = x.parameters?.ToDictionary(
 								x => x.parameter.name,
 								x => new OToolFunctionParameterProperty
 								{
@@ -631,8 +631,8 @@ namespace SharperLLM.API
 									description = x.parameter.description,
 									@enum = x.parameter.@enum
 								}
-							),
-							required = x.parameters!.Where(x => x.required).Select(x => x.parameter.name).ToList()
+							) ?? [],
+							required = x.parameters?.Where(x => x.required).Select(x => x.parameter.name).ToList() ?? []
 						}
 					}
 				}
