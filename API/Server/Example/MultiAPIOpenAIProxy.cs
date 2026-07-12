@@ -13,7 +13,7 @@ namespace SharperLLM.API.Server.Example
 		private OpenAIServer server;
 
 		// 用于跟踪每个API的当前并发请求数
-		private readonly Dictionary<ILLMAPI, int> apiConcurrency = new Dictionary<ILLMAPI, int>();
+		private readonly Dictionary<IChatCompletionClient, int> apiConcurrency = new Dictionary<IChatCompletionClient, int>();
 		private readonly Random random = new Random();
 
 		public MultiAPIOpenAIProxy()
@@ -37,7 +37,7 @@ namespace SharperLLM.API.Server.Example
 			// 初始化并发计数器
 			foreach (var llmInfo in api)
 			{
-				apiConcurrency[llmInfo.lLMAPI] = 0;
+				apiConcurrency[llmInfo.ChatClient] = 0;
 			}
 
 			server.Start();
@@ -85,25 +85,16 @@ namespace SharperLLM.API.Server.Example
 					}
 
 					// 增加并发计数
-					apiConcurrency[selectedApi.lLMAPI]++;
+					apiConcurrency[selectedApi.ChatClient]++;
 
 					try
 					{
 						// 调用选中的API
-						var stream = selectedApi.useTextCompletion
-							? selectedApi.lLMAPI.GenerateTextStream
-							(
-								new PromptBuilder(selectedApi.promptBuilderTemplate)
-								{
-									Messages = data.pb.Messages
-								}.GeneratePromptWithLatestOuputPrefix(),
-								default
-							)
-							: selectedApi.lLMAPI.GenerateChatReplyStream(data.pb, default);
+						var stream = selectedApi.ChatClient.GenerateStreamAsync(data.pb, default);
 
 						await foreach (var chunk in stream)
 						{
-							yield return chunk;
+							yield return chunk.Body.Content;
 						}
 
 						yield break; // 成功完成，退出循环
@@ -111,7 +102,7 @@ namespace SharperLLM.API.Server.Example
 					finally
 					{
 						// 减少并发计数
-						apiConcurrency[selectedApi.lLMAPI]--;
+						apiConcurrency[selectedApi.ChatClient]--;
 					}
 				}
 				else
@@ -133,17 +124,15 @@ namespace SharperLLM.API.Server.Example
 				}
 
 				// 检查是否未满负荷
-				return apiConcurrency[apiInfo.lLMAPI] < apiInfo.concurrency;
+				return apiConcurrency[apiInfo.ChatClient] < apiInfo.concurrency;
 			}).ToList();
 		}
 	}
 
 	public struct LLMInfo
 	{
-		required public ILLMAPI lLMAPI;
+		required public IChatCompletionClient ChatClient;
 		required public int concurrency;
-		required public bool useTextCompletion;
-		required public PromptBuilder promptBuilderTemplate;
 		required public string[] modelAffinity;
 	}
 }

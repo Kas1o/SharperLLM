@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace SharperLLM.API
 {
-	public class KoboldAPI : ILLMAPI
+	public class KoboldTextCompletionClient : ITextCompletionClient
 	{
 		public class KoboldAPIConf : ICloneable
 		{
@@ -88,12 +88,12 @@ namespace SharperLLM.API
 			}
 		}
 
-		public KoboldAPI(string uri, KoboldAPIConf conf)
+		public KoboldTextCompletionClient(string uri, KoboldAPIConf conf)
 		{
 			this.conf = conf;
 			_uri = CreateLooseUri(uri);
 		}
-		public KoboldAPI(string uri)
+		public KoboldTextCompletionClient(string uri)
 		{
 			_uri = CreateLooseUri(uri);
 		}
@@ -123,7 +123,7 @@ namespace SharperLLM.API
 			}
 		}
 
-		public async IAsyncEnumerable<string> GenerateTextStream(string prompt, CancellationToken cancellationToken)
+		public async IAsyncEnumerable<string> GenerateStreamAsync(string prompt, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
 		{
 			conf.prompt = prompt;
 			var client = new HttpClient();
@@ -166,7 +166,7 @@ namespace SharperLLM.API
 				}
 			}
 		}
-		public async Task<string> GenerateText(string prompt, int retry = 0)
+		public async Task<string> GenerateAsync(string prompt)
 		{
 			conf.prompt = prompt;
 			var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(999) };
@@ -208,34 +208,8 @@ namespace SharperLLM.API
 			}
 			catch (Exception ex)
 			{
-				if (retry > 0)
-				{
-					return await GenerateText(prompt, retry - 1);
-				}
-
-				// 将其他异常也直接抛出
 				throw new ApplicationException($"An error occurred while processing the request:{ex.Message}", ex);
 			}
-		}
-
-		public IAsyncEnumerable<string> GenerateChatReplyStream(PromptBuilder promptBuilder, CancellationToken cancellationToken)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task<string> GenerateChatReply(PromptBuilder promptBuilder)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, CancellationToken cancellationToken)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
-		{
-			throw new NotImplementedException();
 		}
 	}
 }

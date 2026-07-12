@@ -8,7 +8,7 @@ using SharperLLM.Util;
 
 namespace SharperLLM.API
 {
-    public class OllamaAPI(string uri, string modelName) : ILLMAPI
+    public class OllamaTextCompletionClient(string uri, string modelName) : ITextCompletionClient
     {
         public class OllamaConf// request parameters
         {
@@ -25,30 +25,16 @@ namespace SharperLLM.API
         {
             model = modelName
         };
-        public async Task<string> GenerateText(string prompt, int retry = 0)
+        public async Task<string> GenerateAsync(string prompt)
         {
-            try
+            var result = new StringBuilder();
+            await foreach (var item in GenerateStreamAsync(prompt, default))
             {
-                var result = new StringBuilder();
-                await foreach (var item in GenerateTextStream(prompt, default))
-                {
-                    result.Append(item);
-                }
-                return result.ToString();
+                result.Append(item);
             }
-            catch
-            {
-                if (retry > 0)
-                {
-                    return await GenerateText(prompt, retry-1);
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            return result.ToString();
         }
-        public async IAsyncEnumerable<string> GenerateTextStream(string prompt, CancellationToken cancellationToken)
+        public async IAsyncEnumerable<string> GenerateStreamAsync(string prompt, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             conf.prompt = prompt;
 
@@ -82,25 +68,5 @@ namespace SharperLLM.API
             }
 
         }
-
-		IAsyncEnumerable<string> ILLMAPI.GenerateChatReplyStream(PromptBuilder promptBuilder, CancellationToken cancellationToken)
-		{
-			throw new NotImplementedException();
-		}
-
-		Task<string> ILLMAPI.GenerateChatReply(PromptBuilder promptBuilder)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IAsyncEnumerable<ResponseEx> GenerateChatExStream(PromptBuilder pb, CancellationToken cancellationToken)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task<ResponseEx> GenerateChatEx(PromptBuilder pb)
-		{
-			throw new NotImplementedException();
-		}
-	}
+    }
 }

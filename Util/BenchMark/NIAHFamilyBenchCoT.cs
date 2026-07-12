@@ -9,7 +9,7 @@ namespace SharperLLM.Util.BenchMark;
 // 3family
 // 4family
 // 5family
-public class NIAHFamilyBenchCoT(ILLMAPI api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
+public class NIAHFamilyBenchCoT(IChatCompletionClient api, PromptBuilder pb, int maxFamilyCount, int ppfIncTimes, int ppfInterval, int rep, bool fixedSampleTime = true)
 {
     public class FamilyNode
     {
@@ -203,9 +203,9 @@ public class NIAHFamilyBenchCoT(ILLMAPI api, PromptBuilder pb, int maxFamilyCoun
         ];
 
         string response = string.Empty;
-        foreach (var token in api.GenerateChatReplyStream(pb, default).ToBlockingEnumerable())
+        foreach (var chunk in api.GenerateStreamAsync(pb, default).ToBlockingEnumerable())
         {
-            response += token;
+            response += chunk.Body.Content;
         }
         if (response.Trim() == string.Empty) return AskQuestion(desc, target, anc, out accuracy);//空回复重问。
 

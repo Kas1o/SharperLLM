@@ -9,7 +9,7 @@ namespace SharperLLM.Util.BenchMark;
 
 public class NIAHBench
 {
-    private ILLMAPI _api;
+    private ITextCompletionClient _api;
     private int _textLength;
     private int _interval;
     private int _repetitions;
@@ -17,7 +17,7 @@ public class NIAHBench
     private string _paddingString;
     private PromptBuilder _pb;
 
-    public NIAHBench(ILLMAPI api, int textLength, int interval, PromptBuilder pb, int repetitions = 1, string hiddenString = null, string paddingString  = null)
+    public NIAHBench(ITextCompletionClient api, int textLength, int interval, PromptBuilder pb, int repetitions = 1, string hiddenString = null, string paddingString  = null)
     {
         _api = api;
         _textLength = textLength;
@@ -79,7 +79,7 @@ public class NIAHBench
                 var prompt = _pb.GetResult();
                 prompt +="\n好的,被隐藏的关键信息的内容是：";
                 string response = string.Empty;
-                await foreach (var token in _api.GenerateTextStream(prompt, default))
+                await foreach (var token in _api.GenerateStreamAsync(prompt, default))
                 {
                     response += token;
                 }

@@ -7,7 +7,7 @@ namespace SharperLLM.Agents;
 public sealed class ToolCallLoopRunner
 {
     public async Task RunAsync(
-        ILLMAPI llmApi,
+        IChatCompletionClient llmApi,
         IPromptContext promptContext,
         IReadOnlyList<Tool> toolDefinitions,
         IToolExecutor toolExecutor,
@@ -26,7 +26,7 @@ public sealed class ToolCallLoopRunner
             callbacks?.OnRoundStart?.Invoke(round);
 
             var promptBuilder = promptContext.BuildPromptBuilder(toolDefinitions);
-            var response = await llmApi.GenerateChatEx(promptBuilder);
+            var response = await llmApi.GenerateAsync(promptBuilder);
 
             callbacks?.OnRoundCompleted?.Invoke(round, response);
             promptContext.AppendAssistantMessage(CloneChatMessage(response.Body));
@@ -49,7 +49,7 @@ public sealed class ToolCallLoopRunner
     }
 
     public async Task RunStreamAsync(
-        ILLMAPI llmApi,
+        IChatCompletionClient llmApi,
         IPromptContext promptContext,
         IReadOnlyList<Tool> toolDefinitions,
         IToolExecutor toolExecutor,
@@ -68,7 +68,7 @@ public sealed class ToolCallLoopRunner
             callbacks?.OnRoundStart?.Invoke(round);
 
             var promptBuilder = promptContext.BuildPromptBuilder(toolDefinitions);
-            var stream = llmApi.GenerateChatExStream(promptBuilder, cancellationToken);
+            var stream = llmApi.GenerateStreamAsync(promptBuilder, cancellationToken);
 
             var accumulatedResponse = new ResponseEx
             {
