@@ -133,7 +133,7 @@ public sealed class ToolCallLoopRunner
         return new ChatMessage
         {
             Content = original.Content,
-            ImageBase64 = original.ImageBase64,
+            Images = original.Images?.Select(i => (ChatImage)i.Clone()).ToList(),
             thinking = original.thinking,
             id = original.id,
             toolCalls = original.toolCalls?.Select(tc => new ToolCall

@@ -51,6 +51,14 @@ namespace SharperLLM.API
 
 		private string BuildPrompt(PromptBuilder pb)
 		{
+			// 文本补全端点只能接收纯文本：图像必须显式报错，
+			// 否则会被悄悄丢掉，表现为「模型看不到图」这种难以排查的问题。
+			var withImage = pb.Messages.FirstOrDefault(m => m.Item1.Images is { Count: > 0 });
+			if (withImage.Item1 != null)
+				throw new NotSupportedException(
+					"The current API is a text-completion endpoint and cannot accept image input. " +
+					"Remove the attached image or switch to an OpenAI-compatible chat API.");
+
 			var merged = _template.Clone();
 			merged.Messages = pb.Messages;
 			merged.System = pb.System;

@@ -382,7 +382,31 @@ namespace SharperLLM.API
 		}
 
 		#endregion
-		List<dynamic> BuildMessages(IEnumerable<(ChatMessage, PromptBuilder.From)> messages)
+
+		/// <summary>
+		/// 构建 OpenAI 兼容的多模态内容块数组：文本块 + 每个图像一个 image_url 块。
+		/// 图像数据在此时才解析（文件引用会读取磁盘），因此请求构建失败会直接抛出异常。
+		/// </summary>
+		internal static List<dynamic> BuildContentParts(ChatMessage message)
+		{
+			var parts = new List<dynamic>();
+
+			if (!string.IsNullOrEmpty(message.Content))
+				parts.Add(new { type = "text", text = message.Content });
+
+			foreach (var image in message.Images!)
+			{
+				parts.Add(new
+				{
+					type = "image_url",
+					image_url = new { url = image.GetDataUrl() }
+				});
+			}
+
+			return parts;
+		}
+
+		internal List<dynamic> BuildMessages(IEnumerable<(ChatMessage, PromptBuilder.From)> messages)
 		{
 			var dynamics = new List<dynamic>();
 			var messagesList = messages.ToList();
@@ -425,38 +449,35 @@ namespace SharperLLM.API
 						var unexpected => as_is? unexpected.ToString() : "user" // fallback
 					};
 
-					if (!string.IsNullOrEmpty(message.ImageBase64))
+					// 纯文本消息保持 content 为字符串（兼容性最好）；
+					// 携带图像时改用 OpenAI 兼容的多模态内容块数组。
+					if (message.Images is { Count: > 0 })
 					{
-						var inputs = new List<dynamic>
-						{
-							new { type = "input_text", text = message.Content },
-							new { type = "input_image", image_url = $"data:image/jpeg;base64,{message.ImageBase64}" }
-						};
-						((IDictionary<string, object>)msg).Add("input", inputs.ToArray());
+						((IDictionary<string, object>)msg).Add("content", BuildContentParts(message));
 					}
 					else
 					{
 						((IDictionary<string, object>)msg).Add("content", message.Content);
+					}
 
-						// 只有当 thinking 段后面不存在 role 为 user 的消息时才附加 thinking 段
-						if (AddThinkingToRequest && message.thinking != null)
+					// 只有当 thinking 段后面不存在 role 为 user 的消息时才附加 thinking 段
+					if (AddThinkingToRequest && message.thinking != null)
+					{
+						bool hasSubsequentUserMessage = false;
+						if (! as_is) // as is 模式下不进行搜索，直接附加
+						for (int j = i + 1; j < messagesList.Count; j++)
 						{
-							bool hasSubsequentUserMessage = false;
-							if (! as_is) // as is 模式下不进行搜索，直接附加
-							for (int j = i + 1; j < messagesList.Count; j++)
+							var (_, nextFrom) = messagesList[j];
+							if (nextFrom == PromptBuilder.From.user)
 							{
-								var (_, nextFrom) = messagesList[j];
-								if (nextFrom == PromptBuilder.From.user)
-								{
-									hasSubsequentUserMessage = true;
-									break;
-								}
+								hasSubsequentUserMessage = true;
+								break;
 							}
+						}
 
-							if (!hasSubsequentUserMessage)
-							{
-								((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
-							}
+						if (!hasSubsequentUserMessage)
+						{
+							((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
 						}
 					}
 
