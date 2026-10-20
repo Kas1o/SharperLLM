@@ -27,6 +27,20 @@ namespace SharperLLM.API
 		/// 请求体根级别的自定义参数，会被合并到请求体根对象中
 		/// </summary>
 		public Dictionary<string, object>? CustomRequestProperties { get; set; } = null;
+
+		/// <summary>
+		/// 附加的自定义 HTTP 请求头（键为头名称，值为头值）。
+		/// 用于需要额外鉴权头、会话头或客户端标识的 OpenAI 兼容网关；
+		/// 同名头会覆盖默认头（例如用别的鉴权方案替换 <c>Bearer</c>）。
+		/// </summary>
+		public Dictionary<string, string>? CustomHeaders { get; set; } = null;
+
+		/// <summary>
+		/// 模型列表接口地址。为 null 时使用 <c>{url}/models</c>。
+		/// 部分网关的模型列表与对话接口不在同一路径前缀下（如 OpenCode Go）。
+		/// </summary>
+		public string? ModelsUrl { get; set; } = null;
+
 		#region Basic API
 		public async Task<ResponseEx> GenerateAsync(PromptBuilder pb)
 		{
@@ -60,11 +74,11 @@ namespace SharperLLM.API
 			}
 
 			using var client = new HttpClient();
-			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 			//序列化且忽略null字段
 			var jsonContent = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-			var response = await client.PostAsync(targetURL, content);
+			using var request = CreateRequest(HttpMethod.Post, targetURL, content);
+			using var response = await client.SendAsync(request);
 			var responseString = await response.Content.ReadAsStringAsync();
 			/*
 			   {
@@ -205,8 +219,6 @@ namespace SharperLLM.API
 			}
 
 			using var client = new HttpClient();
-			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 
 			var jsonContent = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 #if DEBUG
@@ -215,6 +227,8 @@ namespace SharperLLM.API
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
 			using var request = new HttpRequestMessage(HttpMethod.Post, targetURL) { Content = content };
+			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+			ApplyHeaders(request);
 			using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 			if (!response.IsSuccessStatusCode)
 			{
@@ -340,10 +354,10 @@ namespace SharperLLM.API
 				input
 			};
 			using var client = new HttpClient();
-			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 			var jsonContent = JsonConvert.SerializeObject(requestBody);
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-			var response = await client.PostAsync(targetURL, content);
+			using var request = CreateRequest(HttpMethod.Post, targetURL, content);
+			using var response = await client.SendAsync(request);
 			var responseString = await response.Content.ReadAsStringAsync();
 			if (response.IsSuccessStatusCode)
 			{
@@ -359,10 +373,10 @@ namespace SharperLLM.API
 
 		public async Task<List<string>> GetModelNameList()
 		{
-			var targetURL = $"{url}/models";
+			var targetURL = string.IsNullOrWhiteSpace(ModelsUrl) ? $"{url}/models" : ModelsUrl;
 			using var client = new HttpClient();
-			client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-			var response = await client.GetAsync(targetURL);
+			using var request = CreateRequest(HttpMethod.Get, targetURL, null);
+			using var response = await client.SendAsync(request);
 			var responseString = await response.Content.ReadAsStringAsync();
 			if (response.IsSuccessStatusCode)
 			{
@@ -379,6 +393,49 @@ namespace SharperLLM.API
 		public void ChangeModel(string newModelName)
 		{
 			model = newModelName;
+		}
+
+		#endregion
+
+		#region request headers
+
+		/// <summary>
+		/// 构建带鉴权头与自定义头的请求。自定义头必需合法，否则直接失败，
+		/// 避免请求被静默地发成缺少鉴权 / 会话头的形态。
+		/// </summary>
+		private HttpRequestMessage CreateRequest(HttpMethod method, string targetURL, HttpContent? content)
+		{
+			var request = new HttpRequestMessage(method, targetURL) { Content = content };
+			ApplyHeaders(request);
+			return request;
+		}
+
+		/// <summary>
+		/// 写入默认鉴权头，再覆盖写入 <see cref="CustomHeaders"/>。
+		/// </summary>
+		private void ApplyHeaders(HttpRequestMessage request)
+		{
+			request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {apiKey}");
+
+			if (CustomHeaders == null)
+				return;
+
+			foreach (var (name, value) in CustomHeaders)
+			{
+				if (string.IsNullOrWhiteSpace(name))
+					throw new InvalidOperationException("Custom HTTP header name cannot be empty.");
+
+				if (value == null)
+					throw new InvalidOperationException($"Custom HTTP header '{name}' has no value.");
+
+				// 自定义头优先于默认头（例如用别的鉴权方案替换 Bearer Authorization）
+				request.Headers.Remove(name);
+
+				if (!request.Headers.TryAddWithoutValidation(name, value))
+					throw new InvalidOperationException(
+						$"Custom HTTP header '{name}' cannot be set on request headers. " +
+						"Content headers (such as Content-Type) are configured through the request body.");
+			}
 		}
 
 		#endregion
