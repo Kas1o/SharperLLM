@@ -21,7 +21,12 @@ namespace SharperLLM.API
 		public float temperature = _temperature;
 		public int max_tokens = _max_tokens;
 		public bool as_is = _as_is;
-		public bool AddThinkingToRequest { get; set; } = true;
+
+		/// <summary>
+		/// 请求中如何回传 assistant 消息的推理内容（<c>reasoning_content</c>）。
+		/// 默认为 <see cref="ReasoningEchoMode.Full"/>（完整回传）。
+		/// </summary>
+		public ReasoningEchoMode ReasoningEchoMode { get; set; } = ReasoningEchoMode.Full;
 
 		/// <summary>
 		/// 请求体根级别的自定义参数，会被合并到请求体根对象中
@@ -517,25 +522,11 @@ namespace SharperLLM.API
 						((IDictionary<string, object>)msg).Add("content", message.Content);
 					}
 
-					// 只有当 thinking 段后面不存在 role 为 user 的消息时才附加 thinking 段
-					if (AddThinkingToRequest && message.thinking != null)
+					// 按 ReasoningEchoMode 决定是否把 thinking 作为 reasoning_content 回传
+					if (message.thinking != null
+						&& ShouldEchoReasoning(ReasoningEchoMode, messagesList, i))
 					{
-						bool hasSubsequentUserMessage = false;
-						if (! as_is) // as is 模式下不进行搜索，直接附加
-						for (int j = i + 1; j < messagesList.Count; j++)
-						{
-							var (_, nextFrom) = messagesList[j];
-							if (nextFrom == PromptBuilder.From.user)
-							{
-								hasSubsequentUserMessage = true;
-								break;
-							}
-						}
-
-						if (!hasSubsequentUserMessage)
-						{
-							((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
-						}
+						((IDictionary<string, object>)msg).Add("reasoning_content", message.thinking);
 					}
 
 					// 合并消息级别的自定义参数
@@ -552,6 +543,36 @@ namespace SharperLLM.API
 			}
 
 			return dynamics;
+		}
+
+		/// <summary>
+		/// 判断第 <paramref name="index"/> 条（assistant）消息的推理内容是否需要回传。
+		/// </summary>
+		private static bool ShouldEchoReasoning(
+			ReasoningEchoMode mode,
+			IReadOnlyList<(ChatMessage Message, PromptBuilder.From From)> messages,
+			int index)
+		{
+			switch (mode)
+			{
+				case ReasoningEchoMode.Full:
+					return true;
+
+				case ReasoningEchoMode.None:
+					return false;
+
+				case ReasoningEchoMode.AfterLastUser:
+					for (int j = index + 1; j < messages.Count; j++)
+					{
+						if (messages[j].From == PromptBuilder.From.user)
+							return false;
+					}
+					return true;
+
+				default:
+					throw new ArgumentOutOfRangeException(
+						nameof(mode), mode, "Unknown reasoning echo mode.");
+			}
 		}
 
 		List<OTool> BuildTools(IEnumerable<Tool> tools)
